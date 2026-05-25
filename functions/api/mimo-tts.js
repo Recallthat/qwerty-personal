@@ -28,7 +28,6 @@ export async function onRequestPost({ request }) {
     const headers = new Headers(corsHeaders);
     const contentType = upstream.headers.get("content-type") || "application/json";
     headers.set("content-type", contentType);
-
     return new Response(await upstream.arrayBuffer(), {
       status: upstream.status,
       headers
