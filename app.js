@@ -60,6 +60,39 @@ const ttsVoices = [
   "cedar"
 ];
 
+const mimoTtsVoices = [
+  { value: "MimoDefault", label: "MiMo 默认" },
+  { value: "Bingtang", label: "冰糖 · 中文女声" },
+  { value: "Moli", label: "茉莉 · 中文女声" },
+  { value: "Soda", label: "苏打 · 中文男声" },
+  { value: "Baihua", label: "白桦 · 中文男声" },
+  { value: "Mia", label: "Mia · 英文女声" },
+  { value: "Chloe", label: "Chloe · 英文女声" },
+  { value: "Milo", label: "Milo · 英文男声" },
+  { value: "Dean", label: "Dean · 英文男声" },
+  { value: "DefaultEn", label: "Default English" },
+  { value: "DefaultZh", label: "Default Chinese" }
+];
+
+const mimoTtsTones = [
+  { value: "", label: "自然清晰" },
+  { value: "变慢", label: "变慢" },
+  { value: "变快", label: "变快" },
+  { value: "开心", label: "开心" },
+  { value: "悲伤", label: "悲伤" },
+  { value: "生气", label: "生气" },
+  { value: "悄悄话", label: "悄悄话" },
+  { value: "夹子音", label: "夹子音" },
+  { value: "台湾腔", label: "台湾腔" },
+  { value: "东北话", label: "东北话" },
+  { value: "四川话", label: "四川话" },
+  { value: "河南话", label: "河南话" },
+  { value: "粤语", label: "粤语" },
+  { value: "孙悟空", label: "孙悟空" },
+  { value: "林黛玉", label: "林黛玉" },
+  { value: "唱歌", label: "唱歌" }
+];
+
 const defaultProfile = (name = "我的账号") => ({
   id: crypto.randomUUID(),
   name,
@@ -93,6 +126,7 @@ const defaultProfile = (name = "我的账号") => ({
     ttsBaseUrl: "",
     ttsModel: "gpt-4o-mini-tts",
     ttsVoice: "marin",
+    ttsTone: "",
     ttsSpeed: 0.9,
     ttsInstructions: "Speak like a patient English teacher. Clear, natural, slightly slow, and human-like."
   }
@@ -154,6 +188,9 @@ const elements = {
   aiAnalyzeButton: $("#aiAnalyzeButton"),
   aiAskButton: $("#aiAskButton"),
   aiQuestion: $("#aiQuestion"),
+  aiPanelToggle: $("#aiPanelToggle"),
+  aiPanelBody: $("#aiPanelBody"),
+  aiPanelChevron: $("#aiPanelChevron"),
   aiStatus: $("#aiStatus"),
   aiOutput: $("#aiOutput"),
   aiContextPreview: $("#aiContextPreview"),
@@ -189,6 +226,7 @@ const elements = {
   ttsBaseUrlSetting: $("#ttsBaseUrlSetting"),
   ttsModelSetting: $("#ttsModelSetting"),
   ttsVoiceSetting: $("#ttsVoiceSetting"),
+  ttsToneSetting: $("#ttsToneSetting"),
   ttsSpeedSetting: $("#ttsSpeedSetting"),
   ttsInstructionsSetting: $("#ttsInstructionsSetting"),
   noteSetting: $("#noteSetting"),
@@ -338,12 +376,27 @@ function populateSelects() {
     .map((name) => `<option value="${name}">${name.replace(/\.(wav|mp3)$/i, "")}</option>`)
     .join("");
   elements.keySoundSetting.value = profile.settings.keySoundName;
-  elements.ttsVoiceSetting.innerHTML = ttsVoices
-    .map((voice) => `<option value="${voice}">${voice}</option>`)
-    .join("");
+  renderTtsOptions();
   renderAiModelOptions();
   renderChapters();
   renderCatalogFilters();
+}
+
+function renderTtsOptions() {
+  const provider = elements.ttsProviderSetting?.value || profile.settings.ttsProvider;
+  const voices = provider === "mimo"
+    ? mimoTtsVoices
+    : ttsVoices.map((voice) => ({ value: voice, label: voice }));
+  elements.ttsVoiceSetting.innerHTML = voices
+    .map((voice) => `<option value="${voice.value}">${voice.label}</option>`)
+    .join("");
+  elements.ttsToneSetting.innerHTML = mimoTtsTones
+    .map((tone) => `<option value="${tone.value}">${tone.label}</option>`)
+    .join("");
+  elements.ttsVoiceSetting.value = voices.some((voice) => voice.value === profile.settings.ttsVoice)
+    ? profile.settings.ttsVoice
+    : voices[0].value;
+  elements.ttsToneSetting.value = profile.settings.ttsTone || "";
 }
 
 function renderAiModelOptions() {
@@ -424,7 +477,13 @@ function renderSettings() {
   elements.ttsApiKeySetting.value = profile.settings.ttsApiKey || "";
   elements.ttsBaseUrlSetting.value = profile.settings.ttsBaseUrl || "";
   elements.ttsModelSetting.value = profile.settings.ttsModel;
-  elements.ttsVoiceSetting.value = profile.settings.ttsVoice;
+  renderTtsOptions();
+  if ([...elements.ttsVoiceSetting.options].some((option) => option.value === profile.settings.ttsVoice)) {
+    elements.ttsVoiceSetting.value = profile.settings.ttsVoice;
+  }
+  if ([...elements.ttsToneSetting.options].some((option) => option.value === profile.settings.ttsTone)) {
+    elements.ttsToneSetting.value = profile.settings.ttsTone || "";
+  }
   elements.ttsSpeedSetting.value = profile.settings.ttsSpeed;
   elements.ttsInstructionsSetting.value = profile.settings.ttsInstructions;
   elements.noteSetting.value = profile.note;
@@ -650,7 +709,7 @@ function updateSessionMetrics() {
 
 async function speak(word) {
   if (!word) return;
-  if (profile.settings.ttsProvider === "openai" || profile.settings.ttsProvider === "custom") {
+  if (profile.settings.ttsProvider === "openai" || profile.settings.ttsProvider === "custom" || profile.settings.ttsProvider === "mimo") {
     try {
       await speakWithAi(word);
       return;
@@ -673,6 +732,9 @@ function speakWithBrowser(word) {
 async function speakWithAi(word) {
   const key = profile.settings.ttsApiKey || profile.settings.aiApiKey;
   if (!key) throw new Error("missing api key");
+  if (profile.settings.ttsProvider === "mimo") {
+    return speakWithMimo(word, key);
+  }
   const baseUrl = normalizeBaseUrl(
     profile.settings.ttsProvider === "custom"
       ? profile.settings.ttsBaseUrl || profile.settings.aiBaseUrl
@@ -695,6 +757,71 @@ async function speakWithAi(word) {
   });
   if (!response.ok) throw new Error(await response.text());
   const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const audio = new Audio(url);
+  audio.onended = () => URL.revokeObjectURL(url);
+  await audio.play();
+}
+
+async function speakWithMimo(word, key) {
+  const baseUrl = normalizeBaseUrl(profile.settings.ttsBaseUrl || "https://api.xiaomimimo.com/v1");
+  const styledText = buildMimoSpeechText(word);
+  const response = await fetch(`${baseUrl}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${key}`,
+      "api-key": key
+    },
+    body: JSON.stringify({
+      model: profile.settings.ttsModel || "mimo-v2.5-tts",
+      voice: profile.settings.ttsVoice || "DefaultEn",
+      response_format: "mp3",
+      messages: [
+        {
+          role: "user",
+          content: styledText
+        }
+      ],
+      user_message: profile.settings.ttsInstructions || undefined
+    })
+  });
+  if (!response.ok) throw new Error(await response.text());
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.startsWith("audio/")) {
+    const blob = await response.blob();
+    return playAudioBlob(blob);
+  }
+  const data = await response.json();
+  const audioData = findAudioPayload(data);
+  if (!audioData) throw new Error("MiMo 没有返回可播放音频。");
+  const blob = base64ToAudioBlob(audioData);
+  return playAudioBlob(blob);
+}
+
+function buildMimoSpeechText(word) {
+  const style = profile.settings.ttsTone;
+  const stylePrefix = style ? `<style>${style}</style>` : "";
+  const instruction = profile.settings.ttsInstructions ? `（${profile.settings.ttsInstructions}）` : "";
+  return `${stylePrefix}${instruction}${word}`;
+}
+
+function findAudioPayload(data) {
+  const text = JSON.stringify(data);
+  const dataUrl = text.match(/data:audio\/[^;]+;base64,([A-Za-z0-9+/=]+)/);
+  if (dataUrl) return dataUrl[0];
+  const base64 = text.match(/"data"\s*:\s*"([A-Za-z0-9+/=]{80,})"/) || text.match(/"audio"\s*:\s*"([A-Za-z0-9+/=]{80,})"/);
+  return base64?.[1] || "";
+}
+
+function base64ToAudioBlob(value) {
+  const clean = value.includes(",") ? value.split(",").pop() : value;
+  const mime = value.match(/^data:([^;]+)/)?.[1] || "audio/mpeg";
+  const bytes = Uint8Array.from(atob(clean), (char) => char.charCodeAt(0));
+  return new Blob([bytes], { type: mime });
+}
+
+async function playAudioBlob(blob) {
   const url = URL.createObjectURL(blob);
   const audio = new Audio(url);
   audio.onended = () => URL.revokeObjectURL(url);
@@ -995,6 +1122,7 @@ function setView(id) {
   $$(".nav-item").forEach((item) => item.classList.toggle("active", item.dataset.view === id));
   $$(".view").forEach((view) => view.classList.remove("active"));
   const target = $(`#${id}View`);
+  if (!target) return;
   target.classList.add("active");
   elements.viewTitle.textContent = target.dataset.title;
   if (id === "dashboard") renderDashboard();
@@ -1003,7 +1131,6 @@ function setView(id) {
     renderDataPreview();
     renderCatalog();
   }
-  if (id === "ai") renderAiContextPreview();
 }
 
 function parseCustomWords(text) {
@@ -1083,6 +1210,7 @@ function bindEvents() {
     profile.settings.ttsBaseUrl = elements.ttsBaseUrlSetting.value.trim();
     profile.settings.ttsModel = elements.ttsModelSetting.value;
     profile.settings.ttsVoice = elements.ttsVoiceSetting.value;
+    profile.settings.ttsTone = elements.ttsToneSetting.value;
     profile.settings.ttsSpeed = Number(elements.ttsSpeedSetting.value || 1);
     profile.settings.ttsInstructions = elements.ttsInstructionsSetting.value.trim();
     profile.note = elements.noteSetting.value.trim();
@@ -1104,9 +1232,20 @@ function bindEvents() {
   });
 
   elements.ttsProviderSetting.addEventListener("change", () => {
+    renderTtsOptions();
     if (elements.ttsProviderSetting.value === "openai" && !elements.ttsBaseUrlSetting.value) {
       elements.ttsBaseUrlSetting.value = "https://api.openai.com/v1";
     }
+    if (elements.ttsProviderSetting.value === "mimo") {
+      elements.ttsBaseUrlSetting.value = elements.ttsBaseUrlSetting.value || "https://api.xiaomimimo.com/v1";
+      elements.ttsModelSetting.value = "mimo-v2.5-tts";
+    }
+  });
+
+  elements.aiPanelToggle.addEventListener("click", () => {
+    const isOpen = elements.aiPanelBody.classList.toggle("open");
+    elements.aiPanelChevron.textContent = isOpen ? "-" : "+";
+    if (isOpen) renderAiContextPreview();
   });
 
   elements.aiAnalyzeButton.addEventListener("click", () => analyzeWithAi());

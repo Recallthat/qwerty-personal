@@ -30,9 +30,30 @@
           <button class="nav-item" type="button" data-view="dashboard">统计</button>
           <button class="nav-item" type="button" data-view="review">复习</button>
           <button class="nav-item" type="button" data-view="library">词库</button>
-          <button class="nav-item" type="button" data-view="ai">AI</button>
           <button class="nav-item" type="button" data-view="settings">设置</button>
         </nav>
+
+        <section class="sidebar-ai">
+          <button class="sidebar-ai-toggle" id="aiPanelToggle" type="button">
+            <span>AI 教练</span>
+            <strong id="aiPanelChevron">+</strong>
+          </button>
+          <div class="sidebar-ai-body" id="aiPanelBody">
+            <div class="ai-status" id="aiStatus">点击分析时才读取本地练习摘要。</div>
+            <button class="primary-button compact-button" id="aiAnalyzeButton" type="button">分析练习</button>
+            <div class="ai-output" id="aiOutput">
+              <p>AI 建议会显示在这里。</p>
+            </div>
+            <div class="ai-question compact">
+              <input id="aiQuestion" type="text" placeholder="追问 AI..." />
+              <button class="ghost-button" id="aiAskButton" type="button">问</button>
+            </div>
+            <details class="ai-context-detail">
+              <summary>将发送的摘要</summary>
+              <pre id="aiContextPreview"></pre>
+            </details>
+          </div>
+        </section>
 
         <div class="daily-card">
           <div>
@@ -254,37 +275,6 @@
           </div>
         </section>
 
-        <section class="view" id="aiView" data-title="AI 教练">
-          <div class="ai-layout">
-            <section class="ai-panel">
-              <div class="section-head">
-                <div>
-                  <p class="eyebrow">AI Coach</p>
-                  <h2>训练分析</h2>
-                </div>
-                <button class="primary-button" id="aiAnalyzeButton" type="button">分析我的练习</button>
-              </div>
-              <div class="ai-status" id="aiStatus">AI 只会在你点击分析时读取练习摘要。</div>
-              <div class="ai-output" id="aiOutput">
-                <p>这里会显示你的速度、正确率、错词、薄弱键位和下一步练习建议。</p>
-              </div>
-              <div class="ai-question">
-                <input id="aiQuestion" type="text" placeholder="也可以问：我最近应该先练哪些词？" />
-                <button class="ghost-button" id="aiAskButton" type="button">追问</button>
-              </div>
-            </section>
-            <section class="ai-panel">
-              <div class="section-head">
-                <div>
-                  <p class="eyebrow">Context</p>
-                  <h2>将发送的摘要</h2>
-                </div>
-              </div>
-              <pre id="aiContextPreview"></pre>
-            </section>
-          </div>
-        </section>
-
         <section class="view" id="settingsView" data-title="个性设置">
           <form class="settings-form" id="settingsForm">
             <label>
@@ -355,6 +345,7 @@
               AI 发音服务
               <select id="ttsProviderSetting">
                 <option value="browser">浏览器发音</option>
+                <option value="mimo">小米 MiMo TTS</option>
                 <option value="openai">OpenAI TTS</option>
                 <option value="custom">自定义 TTS 接口</option>
               </select>
@@ -362,6 +353,9 @@
             <label>
               发音模型
               <select id="ttsModelSetting">
+                <option value="mimo-v2.5-tts">mimo-v2.5-tts</option>
+                <option value="mimo-v2.5-tts-voicedesign">mimo-v2.5-tts-voicedesign</option>
+                <option value="mimo-v2-tts">mimo-v2-tts</option>
                 <option value="gpt-4o-mini-tts">gpt-4o-mini-tts</option>
                 <option value="tts-1-hd">tts-1-hd</option>
                 <option value="tts-1">tts-1</option>
@@ -370,6 +364,10 @@
             <label>
               音色
               <select id="ttsVoiceSetting"></select>
+            </label>
+            <label>
+              语气
+              <select id="ttsToneSetting"></select>
             </label>
             <label>
               语速

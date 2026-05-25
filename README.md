@@ -23,14 +23,15 @@ http://localhost:3000
 - 统计：总词数、平均 WPM、正确率、连续天数、最近练习记录、薄弱字母组合。
 - 键位热力图：根据错键次数提示薄弱键位，自适应模式会优先抽取相关词。
 - 音效：使用官方按键音效、正确音效、错误音效。
-- AI 教练：可配置 OpenAI、DeepSeek、Gemini 或自定义兼容接口；点击分析时才发送练习摘要。
-- AI 发音：可选浏览器发音、OpenAI TTS 或自定义 TTS 接口，支持多种内置音色。
+- AI 教练：放在左侧设置按钮下方的折叠面板里；点击分析时才发送练习摘要。
+- AI 发音：可选浏览器发音、小米 MiMo TTS、OpenAI TTS 或自定义 TTS 接口，支持音色和语气选择。
 - 数据备份：当前账号导出 JSON，备份文件导入为新账号。
 
 ## AI 配置说明
 
 - 分析模型预设包含 OpenAI、DeepSeek V4 Flash/Pro、Gemini 2.5 Flash/Pro/Flash Lite。
-- 发音模型预设包含 `gpt-4o-mini-tts`、`tts-1-hd`、`tts-1`。
+- 发音模型预设包含 MiMo `mimo-v2.5-tts` / `mimo-v2.5-tts-voicedesign` / `mimo-v2-tts`，以及 OpenAI `gpt-4o-mini-tts`、`tts-1-hd`、`tts-1`。
+- MiMo 音色包含冰糖、茉莉、苏打、白桦、Mia、Chloe、Milo、Dean 等；语气包含变快、变慢、开心、悲伤、生气、悄悄话、方言和角色风格。
 - OpenAI TTS 内置音色包含 alloy、ash、ballad、coral、echo、fable、nova、onyx、sage、shimmer、verse、marin、cedar。
 - API Key 只保存在浏览器本地；AI 教练只有在点击“分析我的练习”或“追问”时才读取并发送练习摘要。
 

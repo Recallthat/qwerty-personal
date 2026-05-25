@@ -192,6 +192,90 @@ button {
   font-weight: 800;
 }
 
+.sidebar-ai {
+  display: grid;
+  gap: 10px;
+}
+
+.sidebar-ai-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+  color: var(--text);
+  font-weight: 800;
+}
+
+.sidebar-ai-toggle strong {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.sidebar-ai-body {
+  display: none;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.sidebar-ai-body.open {
+  display: grid;
+}
+
+.compact-button {
+  width: 100%;
+}
+
+.sidebar-ai .ai-status {
+  padding: 10px;
+  font-size: 13px;
+}
+
+.sidebar-ai .ai-output {
+  min-height: 120px;
+  max-height: 190px;
+  overflow: auto;
+  margin: 0;
+  padding: 10px;
+  font-size: 13px;
+}
+
+.sidebar-ai .ai-question {
+  grid-template-columns: minmax(0, 1fr) 42px;
+}
+
+.sidebar-ai .ai-question input,
+.sidebar-ai .ai-question button {
+  min-height: 36px;
+}
+
+.ai-context-detail {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.ai-context-detail summary {
+  cursor: pointer;
+}
+
+.ai-context-detail pre {
+  max-height: 160px;
+  margin: 8px 0 0;
+  font-size: 12px;
+}
+
 .main-content {
   min-width: 0;
   padding: 28px;
@@ -789,7 +873,7 @@ dialog::backdrop {
   }
 
   .side-nav {
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 
   .nav-item {
