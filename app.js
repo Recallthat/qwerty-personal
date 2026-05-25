@@ -61,7 +61,7 @@ const ttsVoices = [
 ];
 
 const mimoTtsVoices = [
-  { value: "MimoDefault", label: "MiMo 默认" },
+  { value: "mimo_default", label: "MiMo 默认" },
   { value: "Bingtang", label: "冰糖 · 中文女声" },
   { value: "Moli", label: "茉莉 · 中文女声" },
   { value: "Soda", label: "苏打 · 中文男声" },
@@ -69,9 +69,7 @@ const mimoTtsVoices = [
   { value: "Mia", label: "Mia · 英文女声" },
   { value: "Chloe", label: "Chloe · 英文女声" },
   { value: "Milo", label: "Milo · 英文男声" },
-  { value: "Dean", label: "Dean · 英文男声" },
-  { value: "DefaultEn", label: "Default English" },
-  { value: "DefaultZh", label: "Default Chinese" }
+  { value: "Dean", label: "Dean · 英文男声" }
 ];
 
 const mimoTtsTones = [
@@ -714,6 +712,7 @@ async function speak(word) {
       await speakWithAi(word);
       return;
     } catch (error) {
+      console.warn("AI TTS failed:", error);
       showToast("AI 发音失败，已使用浏览器发音。");
     }
   }
@@ -765,27 +764,30 @@ async function speakWithAi(word) {
 
 async function speakWithMimo(word, key) {
   const baseUrl = normalizeBaseUrl(profile.settings.ttsBaseUrl || "https://api.xiaomimimo.com/v1");
-  const styledText = buildMimoSpeechText(word);
-  const response = await fetch(`${baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
-      "api-key": key
-    },
-    body: JSON.stringify({
-      model: profile.settings.ttsModel || "mimo-v2.5-tts",
-      voice: profile.settings.ttsVoice || "DefaultEn",
-      response_format: "mp3",
-      messages: [
-        {
-          role: "user",
-          content: styledText
-        }
-      ],
-      user_message: profile.settings.ttsInstructions || undefined
-    })
-  });
+  const assistantText = buildMimoAssistantText(word);
+  const userInstruction = buildMimoUserInstruction();
+  const isVoiceDesign = profile.settings.ttsModel === "mimo-v2.5-tts-voicedesign";
+  const audio = {
+    format: "wav",
+    ...(isVoiceDesign
+      ? { optimize_text_preview: true }
+      : { voice: profile.settings.ttsVoice || "mimo_default" })
+  };
+  const payload = {
+    model: profile.settings.ttsModel || "mimo-v2.5-tts",
+    messages: [
+      {
+        role: "user",
+        content: userInstruction
+      },
+      {
+        role: "assistant",
+        content: assistantText
+      }
+    ],
+    audio
+  };
+  const response = await requestMimoTts(baseUrl, key, payload);
   if (!response.ok) throw new Error(await response.text());
   const contentType = response.headers.get("content-type") || "";
   if (contentType.startsWith("audio/")) {
@@ -799,19 +801,80 @@ async function speakWithMimo(word, key) {
   return playAudioBlob(blob);
 }
 
-function buildMimoSpeechText(word) {
+async function requestMimoTts(baseUrl, key, payload) {
+  if (location.protocol.startsWith("http")) {
+    try {
+      const proxy = await fetch("/api/mimo-tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apiKey: key, baseUrl, payload })
+      });
+      if (proxy.status !== 404 && proxy.headers.get("content-type") !== "text/html") {
+        return proxy;
+      }
+    } catch (error) {
+      console.warn("MiMo proxy unavailable, trying direct request:", error);
+    }
+  }
+  return fetch(`${baseUrl}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${key}`,
+      "api-key": key
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
+function buildMimoAssistantText(word) {
   const style = profile.settings.ttsTone;
-  const stylePrefix = style ? `<style>${style}</style>` : "";
-  const instruction = profile.settings.ttsInstructions ? `（${profile.settings.ttsInstructions}）` : "";
-  return `${stylePrefix}${instruction}${word}`;
+  const stylePrefix = style ? `(${style})` : "";
+  return `${stylePrefix}${word}`;
+}
+
+function buildMimoUserInstruction() {
+  const custom = profile.settings.ttsInstructions?.trim();
+  if (profile.settings.ttsModel === "mimo-v2.5-tts-voicedesign") {
+    return custom || "A clear, warm, patient English teacher voice. Natural and human-like, slightly slow, with precise pronunciation.";
+  }
+  const tone = profile.settings.ttsTone ? `Use a ${profile.settings.ttsTone} style.` : "Use a natural and clear style.";
+  const speed = Number(profile.settings.ttsSpeed || 1);
+  const speedText = speed < 0.95 ? "Speak slightly slower." : speed > 1.05 ? "Speak slightly faster." : "Keep a steady teaching pace.";
+  return [tone, speedText, custom].filter(Boolean).join(" ");
 }
 
 function findAudioPayload(data) {
-  const text = JSON.stringify(data);
-  const dataUrl = text.match(/data:audio\/[^;]+;base64,([A-Za-z0-9+/=]+)/);
-  if (dataUrl) return dataUrl[0];
-  const base64 = text.match(/"data"\s*:\s*"([A-Za-z0-9+/=]{80,})"/) || text.match(/"audio"\s*:\s*"([A-Za-z0-9+/=]{80,})"/);
-  return base64?.[1] || "";
+  const candidates = [];
+  walkAudioPayload(data, candidates);
+  return candidates.find(Boolean) || "";
+}
+
+function walkAudioPayload(value, candidates) {
+  if (!value || candidates.length > 0) return;
+  if (typeof value === "string") {
+    if (/^data:audio\/[^;]+;base64,/i.test(value) || /^[A-Za-z0-9+/=]{120,}$/.test(value)) {
+      candidates.push(value);
+    }
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item) => walkAudioPayload(item, candidates));
+    return;
+  }
+  if (typeof value === "object") {
+    [
+      "audio",
+      "audio_data",
+      "audioData",
+      "data",
+      "b64_json",
+      "base64",
+      "url",
+      "content"
+    ].forEach((key) => walkAudioPayload(value[key], candidates));
+    Object.values(value).forEach((item) => walkAudioPayload(item, candidates));
+  }
 }
 
 function base64ToAudioBlob(value) {
