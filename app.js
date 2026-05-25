@@ -3,6 +3,7 @@ const OLD_STORAGE_KEY = "qwerty-personal-state-v1";
 const TODAY = new Date().toISOString().slice(0, 10);
 const CHAPTER_SIZE = 20;
 const OFFICIAL_DICTIONARIES = Array.isArray(window.OFFICIAL_DICTIONARIES) ? window.OFFICIAL_DICTIONARIES : [];
+const WORD_EXAMPLES = window.WORD_EXAMPLES || {};
 const OFFICIAL_RAW_BASE = "https://raw.githubusercontent.com/RealKai42/qwerty-learner/master/public/";
 const dictionaryCache = new Map();
 
@@ -158,6 +159,12 @@ const elements = {
   phoneticText: $("#phoneticText"),
   targetWord: $("#targetWord"),
   translationText: $("#translationText"),
+  definitionList: $("#definitionList"),
+  exampleCard: $("#exampleCard"),
+  exampleEn: $("#exampleEn"),
+  exampleCn: $("#exampleCn"),
+  phraseCard: $("#phraseCard"),
+  phraseList: $("#phraseList"),
   typedWord: $("#typedWord"),
   typingInput: $("#typingInput"),
   timeMetric: $("#timeMetric"),
@@ -293,15 +300,61 @@ function dictionaryById(id) {
 
 function normalizeWord(item) {
   if (Array.isArray(item)) {
-    return { word: String(item[0] || "").trim(), translation: item[1] || "未填写释义", phonetic: item[2] || "" };
+    const word = String(item[0] || "").trim();
+    const extra = WORD_EXAMPLES[word.toLowerCase()] || {};
+    const translations = normalizeTranslations(item[1] || "未填写释义");
+    return {
+      word,
+      translation: translations.join("；"),
+      translations,
+      phonetic: item[2] || "",
+      example: extra.example || "",
+      phrases: extra.phrases || []
+    };
   }
   const phone = profile.settings.pron === "uk" ? item.ukphone : item.usphone;
+  const word = String(item.name || item.word || item.title || "").trim();
+  const extra = WORD_EXAMPLES[word.toLowerCase()] || {};
+  const translations = normalizeTranslations(item.trans || item.translation || item.desc || "未填写释义");
   return {
-    word: String(item.name || item.word || item.title || "").trim(),
-    translation: Array.isArray(item.trans) ? item.trans.join("；") : item.trans || item.translation || item.desc || "未填写释义",
+    word,
+    translation: translations.join("；"),
+    translations,
     phonetic: phone ? `/${phone}/` : item.phonetic || "",
-    sentence: item.sentence || item.example || ""
+    example: firstText(item.sentence || item.example) || extra.example || "",
+    exampleCn: firstText(item.sentenceCn || item.exampleCn || item.trans_zh || item.cn),
+    phrases: normalizePhrases(item.phrases || item.phrase || item.collocations || item.collocation).concat(extra.phrases || []).slice(0, 6)
   };
+}
+
+function firstText(value) {
+  if (Array.isArray(value)) return value.find(Boolean) || "";
+  return value ? String(value).trim() : "";
+}
+
+function normalizeTranslations(value) {
+  const list = Array.isArray(value) ? value : [value];
+  return list
+    .flatMap((item) => String(item || "").split(/\n+/))
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .filter((item) => !looksLikeEnglishSentence(item));
+}
+
+function looksLikeEnglishSentence(text) {
+  return /[a-zA-Z]/.test(text) && /\s/.test(text) && text.length > 18 && !/[\u4e00-\u9fff]/.test(text);
+}
+
+function normalizePhrases(value) {
+  if (!value) return [];
+  const list = Array.isArray(value) ? value : [value];
+  return list.map((item) => {
+    if (typeof item === "string") return { text: item, translation: "" };
+    return {
+      text: item.text || item.name || item.phrase || item.word || "",
+      translation: item.translation || item.trans || item.desc || ""
+    };
+  }).filter((item) => item.text);
 }
 
 async function loadDictionary(id = elements.dictSelect.value) {
@@ -494,7 +547,10 @@ function renderToggles() {
   elements.dictationToggle.classList.toggle("active", profile.settings.dictation);
   elements.strictToggle.classList.toggle("active", profile.settings.strict);
   elements.keySoundToggle.classList.toggle("active", profile.settings.keySound);
-  elements.translationText.style.display = profile.settings.translation ? "block" : "none";
+  elements.translationText.style.display = "none";
+  elements.definitionList.style.display = profile.settings.translation ? "grid" : "none";
+  elements.exampleCard.style.display = profile.settings.translation && !elements.exampleCard.hidden ? "block" : "none";
+  elements.phraseCard.style.display = profile.settings.translation && !elements.phraseCard.hidden ? "block" : "none";
   elements.targetWord.classList.toggle("hidden", profile.settings.dictation);
 }
 
@@ -595,6 +651,7 @@ function renderWord() {
       elements.targetWord.textContent = fallback[0];
       elements.translationText.textContent = fallback[1];
       elements.phoneticText.textContent = `/${fallback[2]}/`;
+      renderStudyDetails({ word: fallback[0], translations: [fallback[1]], example: "", phrases: [] });
     }
     return;
   }
@@ -604,10 +661,61 @@ function renderWord() {
   elements.targetWord.textContent = item.word;
   elements.phoneticText.textContent = item.phonetic || " ";
   elements.translationText.textContent = item.translation;
+  renderStudyDetails(item);
   renderTyped();
   renderToggles();
   updateFavoriteButton();
   if (profile.settings.sound) speak(item.word);
+}
+
+function renderStudyDetails(item) {
+  const translations = item.translations?.length ? item.translations : normalizeTranslations(item.translation);
+  elements.definitionList.innerHTML = translations.length
+    ? translations.slice(0, 5).map((line) => renderDefinitionLine(line)).join("")
+    : `<div class="definition-line"><span></span><strong>未填写释义</strong></div>`;
+  elements.translationText.textContent = translations[0] || item.translation || "";
+  const example = item.example || WORD_EXAMPLES[item.word?.toLowerCase()]?.example || "";
+  const phrases = item.phrases?.length ? item.phrases : WORD_EXAMPLES[item.word?.toLowerCase()]?.phrases || [];
+  elements.exampleCard.hidden = !example;
+  elements.exampleEn.innerHTML = example ? highlightWord(example, item.word) : "";
+  elements.exampleCn.textContent = item.exampleCn || "";
+  elements.exampleCn.hidden = !item.exampleCn;
+  elements.phraseCard.hidden = !phrases.length;
+  elements.phraseList.innerHTML = phrases.slice(0, 5).map((phrase) => `
+    <div class="phrase-item">
+      <span>${escapeHtml(phrase.text)}</span>
+      <em>${escapeHtml(String(phrase.translation || "").replace(/^phrase\\.\\s*/i, ""))}</em>
+    </div>
+  `).join("");
+}
+
+function renderDefinitionLine(line) {
+  const match = line.match(/^([a-z]+\\.|[a-z]+)\\s+(.+)$/i);
+  const pos = match ? match[1] : "";
+  const text = match ? match[2] : line;
+  return `<div class="definition-line"><span>${escapeHtml(pos)}</span><strong>${formatDefinitionText(text)}</strong></div>`;
+}
+
+function formatDefinitionText(text) {
+  return escapeHtml(text)
+    .replace(/[;；]/g, '<i></i>')
+    .replace(/[,，]/g, '<small></small>');
+}
+
+function highlightWord(sentence, word) {
+  const safe = escapeHtml(sentence);
+  if (!word) return safe;
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return safe.replace(new RegExp(`\\b(${escaped})\\b`, "ig"), "<strong>$1</strong>");
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function renderTyped() {

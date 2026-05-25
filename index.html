@@ -113,6 +113,18 @@
                 <p class="phonetic" id="phoneticText">准备开始</p>
                 <div class="target-word" id="targetWord">practice</div>
                 <p class="translation" id="translationText">练习，实践</p>
+                <div class="definition-list" id="definitionList"></div>
+                <div class="example-card" id="exampleCard">
+                  <p class="example-en" id="exampleEn"></p>
+                  <p class="example-cn" id="exampleCn"></p>
+                </div>
+                <div class="phrase-card" id="phraseCard">
+                  <div class="phrase-tabs">
+                    <span>词组搭配</span>
+                    <span>派生</span>
+                  </div>
+                  <div class="phrase-list" id="phraseList"></div>
+                </div>
                 <div class="typed-word" id="typedWord" aria-live="polite"></div>
                 <input id="typingInput" autocomplete="off" spellcheck="false" aria-label="输入当前单词" />
                 <div class="word-actions">
@@ -413,6 +425,7 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="official-dicts.js"></script>
+    <script src="examples-index.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
