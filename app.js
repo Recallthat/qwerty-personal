@@ -3,6 +3,7 @@ const OLD_STORAGE_KEY = "qwerty-personal-state-v1";
 const TODAY = new Date().toISOString().slice(0, 10);
 const CHAPTER_SIZE = 20;
 const OFFICIAL_DICTIONARIES = Array.isArray(window.OFFICIAL_DICTIONARIES) ? window.OFFICIAL_DICTIONARIES : [];
+const OFFICIAL_RAW_BASE = "https://raw.githubusercontent.com/RealKai42/qwerty-learner/master/public/";
 const dictionaryCache = new Map();
 
 const fallbackWords = [
@@ -272,11 +273,35 @@ async function loadDictionary(id = elements.dictSelect.value) {
   if (id === "fallback" || !OFFICIAL_DICTIONARIES.length) return fallbackWords.map(normalizeWord);
   if (dictionaryCache.has(id)) return dictionaryCache.get(id);
   const meta = dictionaryById(id);
-  const response = await fetch(meta.url);
-  if (!response.ok) throw new Error(`无法读取词库：${meta.name}`);
-  const words = (await response.json()).map(normalizeWord).filter((item) => item.word);
+  const rawData = await fetchDictionaryJson(meta);
+  const words = rawData.map(normalizeWord).filter((item) => item.word);
   dictionaryCache.set(id, words);
   return words;
+}
+
+async function fetchDictionaryJson(meta) {
+  const localUrl = meta.url;
+  const remoteUrl = `${OFFICIAL_RAW_BASE}${meta.url}`;
+  const localResult = await fetchJsonFile(localUrl);
+  if (localResult.ok) return localResult.data;
+  const remoteResult = await fetchJsonFile(remoteUrl);
+  if (remoteResult.ok) return remoteResult.data;
+  throw new Error(`无法读取词库：${meta.name}。请确认 GitHub 仓库里已经上传 dicts 文件夹，或稍后再试官方远程资源。`);
+}
+
+async function fetchJsonFile(url) {
+  try {
+    const response = await fetch(url, { cache: "force-cache" });
+    const text = await response.text();
+    const contentType = response.headers.get("content-type") || "";
+    const looksLikeHtml = text.trim().startsWith("<");
+    if (!response.ok || looksLikeHtml || (!contentType.includes("json") && !text.trim().startsWith("["))) {
+      return { ok: false };
+    }
+    return { ok: true, data: JSON.parse(text) };
+  } catch {
+    return { ok: false };
+  }
 }
 
 function showToast(message) {
