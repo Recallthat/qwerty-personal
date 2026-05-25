@@ -423,6 +423,39 @@
       </form>
     </dialog>
 
+    <section class="desk-pet" id="deskPet" aria-label="学习桌宠">
+      <div class="pet-bubble" id="petBubble">背一个词，我就恢复一点状态。</div>
+      <div class="pet-card" id="petCard">
+        <div class="pet-head">
+          <div>
+            <strong id="petName">Mimo</strong>
+            <span id="petMoodLabel">待机中</span>
+          </div>
+          <button class="icon-button pet-minimize" id="petMinimizeButton" type="button" title="收起桌宠">−</button>
+        </div>
+        <button class="pet-avatar" id="petAvatar" type="button" title="摸摸它">
+          <span class="pet-ear left"></span>
+          <span class="pet-ear right"></span>
+          <span class="pet-face" id="petFace">•ᴗ•</span>
+        </button>
+        <div class="pet-bars">
+          <label><span>状态</span><i><b id="petHealthBar"></b></i><em id="petHealthText">100</em></label>
+          <label><span>心情</span><i><b id="petMoodBar"></b></i><em id="petMoodText">100</em></label>
+          <label><span>精力</span><i><b id="petEnergyBar"></b></i><em id="petEnergyText">100</em></label>
+        </div>
+        <div class="pet-actions">
+          <button type="button" id="petFeedButton">喂食</button>
+          <button type="button" id="petPlayButton">互动</button>
+          <button type="button" id="petSleepButton">小睡</button>
+        </div>
+        <div class="pet-progress">
+          <span id="petLevelText">Lv.1</span>
+          <strong id="petExpText">0/30</strong>
+        </div>
+      </div>
+      <button class="pet-dock" id="petDockButton" type="button">宠</button>
+    </section>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="official-dicts.js"></script>
     <script src="examples-index.js"></script>

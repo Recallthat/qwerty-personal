@@ -128,6 +128,19 @@ const defaultProfile = (name = "我的账号") => ({
     ttsTone: "",
     ttsSpeed: 0.9,
     ttsInstructions: "Speak like a patient English teacher. Clear, natural, slightly slow, and human-like."
+  },
+  pet: {
+    name: "Mimo",
+    health: 72,
+    mood: 68,
+    energy: 60,
+    exp: 0,
+    level: 1,
+    collapsed: false,
+    x: null,
+    y: null,
+    sleeping: false,
+    lastCare: Date.now()
   }
 });
 
@@ -138,6 +151,8 @@ let currentIndex = 0;
 let session = null;
 let timerId = null;
 let typedValue = "";
+let inputErrorIndex = -1;
+let inputErrorTimer = null;
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -240,6 +255,26 @@ const elements = {
   newAccountName: $("#newAccountName"),
   createAccountButton: $("#createAccountButton"),
   themeButton: $("#themeButton"),
+  deskPet: $("#deskPet"),
+  petCard: $("#petCard"),
+  petBubble: $("#petBubble"),
+  petName: $("#petName"),
+  petMoodLabel: $("#petMoodLabel"),
+  petFace: $("#petFace"),
+  petAvatar: $("#petAvatar"),
+  petMinimizeButton: $("#petMinimizeButton"),
+  petDockButton: $("#petDockButton"),
+  petFeedButton: $("#petFeedButton"),
+  petPlayButton: $("#petPlayButton"),
+  petSleepButton: $("#petSleepButton"),
+  petHealthBar: $("#petHealthBar"),
+  petMoodBar: $("#petMoodBar"),
+  petEnergyBar: $("#petEnergyBar"),
+  petHealthText: $("#petHealthText"),
+  petMoodText: $("#petMoodText"),
+  petEnergyText: $("#petEnergyText"),
+  petLevelText: $("#petLevelText"),
+  petExpText: $("#petExpText"),
   toast: $("#toast")
 };
 
@@ -270,7 +305,8 @@ function migrateProfile(input) {
     keyErrors: input?.keyErrors || {},
     mistakes: input?.mistakes || {},
     favorites: input?.favorites || [],
-    customWords: input?.customWords || []
+    customWords: input?.customWords || [],
+    pet: { ...base.pet, ...(input?.pet || {}) }
   };
 }
 
@@ -511,6 +547,7 @@ function renderProfile() {
   const percent = Math.min(100, Math.round(((profile.days[TODAY] || 0) / profile.goal) * 100));
   elements.goalRing.textContent = `${percent}%`;
   elements.goalRing.style.background = `conic-gradient(var(--accent) ${percent}%, var(--line) ${percent}%)`;
+  renderPet();
 }
 
 function renderSettings() {
@@ -657,8 +694,10 @@ function renderWord() {
   }
   const item = queue[currentIndex];
   typedValue = "";
+  inputErrorIndex = -1;
   elements.typingInput.value = "";
   elements.targetWord.textContent = item.word;
+  elements.targetWord.setAttribute("aria-label", item.word);
   elements.phoneticText.textContent = item.phonetic || " ";
   elements.translationText.textContent = item.translation;
   renderStudyDetails(item);
@@ -720,11 +759,15 @@ function escapeHtml(value) {
 
 function renderTyped() {
   const target = queue[currentIndex]?.word || "";
-  elements.typedWord.innerHTML = [...target].map((char, index) => {
+  elements.targetWord.innerHTML = [...target].map((char, index) => {
     const typed = typedValue[index];
-    if (typed == null) return `<span>${char}</span>`;
-    return `<span class="${typed === char ? "ok" : "bad"}">${char}</span>`;
+    const classes = ["target-char"];
+    if (typed === char) classes.push("filled");
+    else if (index === inputErrorIndex) classes.push("wrong");
+    else if (index === typedValue.length) classes.push("current");
+    return `<span class="${classes.join(" ")}">${escapeHtml(char)}</span>`;
   }).join("");
+  elements.typedWord.textContent = `${typedValue.length}/${target.length}`;
 }
 
 function handleInput(event) {
@@ -732,6 +775,7 @@ function handleInput(event) {
   const key = event.key;
   if (key === "Escape") {
     typedValue = "";
+    clearInputError();
     elements.typingInput.value = "";
     renderTyped();
     return;
@@ -743,6 +787,7 @@ function handleInput(event) {
   }
   if (key === "Backspace") {
     typedValue = typedValue.slice(0, -1);
+    clearInputError();
     renderTyped();
     return;
   }
@@ -755,12 +800,15 @@ function handleInput(event) {
   session.totalChars += 1;
 
   if (typed === expected) {
+    clearInputError();
     typedValue += typed;
     session.correctChars += 1;
     playSound("key");
   } else {
     session.errors += 1;
+    flashInputError(typedValue.length);
     recordMistake(expected, target, queue[currentIndex]);
+    nudgePetForMistake();
     playSound("wrong");
     if (!profile.settings.strict) typedValue += typed;
   }
@@ -769,6 +817,20 @@ function handleInput(event) {
   renderTyped();
   updateSessionMetrics();
   if (typedValue === target) completeWord();
+}
+
+function flashInputError(index) {
+  inputErrorIndex = index;
+  clearTimeout(inputErrorTimer);
+  inputErrorTimer = setTimeout(() => {
+    inputErrorIndex = -1;
+    renderTyped();
+  }, 360);
+}
+
+function clearInputError() {
+  inputErrorIndex = -1;
+  clearTimeout(inputErrorTimer);
 }
 
 function recordMistake(expected, target, item) {
@@ -790,6 +852,7 @@ function completeWord() {
   const item = queue[currentIndex];
   session.completed += 1;
   session.words.push(item.word);
+  rewardPetForWord(item.word);
   playSound("correct");
   if (profile.mistakes[item.word]?.count > 0) {
     profile.mistakes[item.word].count = Math.max(0, profile.mistakes[item.word].count - 1);
@@ -1146,6 +1209,132 @@ function renderAiOutput(text) {
   elements.aiOutput.textContent = text;
 }
 
+function clampStat(value) {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function petSay(message) {
+  if (!elements.petBubble) return;
+  elements.petBubble.textContent = message;
+}
+
+function renderPet() {
+  if (!elements.deskPet || !profile.pet) return;
+  const pet = profile.pet;
+  const maxExp = pet.level * 30;
+  elements.deskPet.classList.toggle("collapsed", !!pet.collapsed);
+  elements.petName.textContent = pet.name || "Mimo";
+  elements.petHealthBar.style.width = `${pet.health}%`;
+  elements.petMoodBar.style.width = `${pet.mood}%`;
+  elements.petEnergyBar.style.width = `${pet.energy}%`;
+  elements.petHealthText.textContent = pet.health;
+  elements.petMoodText.textContent = pet.mood;
+  elements.petEnergyText.textContent = pet.energy;
+  elements.petLevelText.textContent = `Lv.${pet.level}`;
+  elements.petExpText.textContent = `${pet.exp}/${maxExp}`;
+  const low = Math.min(pet.health, pet.mood, pet.energy) < 35;
+  elements.petAvatar.classList.toggle("low", low);
+  elements.petAvatar.classList.toggle("sleeping", !!pet.sleeping);
+  if (pet.sleeping) {
+    elements.petFace.textContent = "－ᴗ－";
+    elements.petMoodLabel.textContent = "小睡恢复中";
+  } else if (low) {
+    elements.petFace.textContent = "•︵•";
+    elements.petMoodLabel.textContent = "需要背词恢复";
+  } else if (pet.mood > 82) {
+    elements.petFace.textContent = "＾ᴗ＾";
+    elements.petMoodLabel.textContent = "学习状态很好";
+  } else {
+    elements.petFace.textContent = "•ᴗ•";
+    elements.petMoodLabel.textContent = "陪你练习中";
+  }
+  if (pet.x != null && pet.y != null) {
+    elements.deskPet.style.left = `${pet.x}px`;
+    elements.deskPet.style.top = `${pet.y}px`;
+    elements.deskPet.style.right = "auto";
+    elements.deskPet.style.bottom = "auto";
+  }
+}
+
+function updatePet(delta, message = "") {
+  const pet = profile.pet;
+  pet.health = clampStat(pet.health + (delta.health || 0));
+  pet.mood = clampStat(pet.mood + (delta.mood || 0));
+  pet.energy = clampStat(pet.energy + (delta.energy || 0));
+  pet.exp = Math.max(0, pet.exp + (delta.exp || 0));
+  while (pet.exp >= pet.level * 30) {
+    pet.exp -= pet.level * 30;
+    pet.level += 1;
+    message = `升级到 Lv.${pet.level}，今天的记忆很稳。`;
+  }
+  pet.lastCare = Date.now();
+  if (message) petSay(message);
+  renderPet();
+  saveState();
+}
+
+function rewardPetForWord(word) {
+  profile.pet.sleeping = false;
+  updatePet({ health: 6, mood: 4, energy: 3, exp: 5 }, `记住 ${word} 了，我恢复了一点状态。`);
+  elements.petAvatar.classList.remove("celebrate");
+  void elements.petAvatar.offsetWidth;
+  elements.petAvatar.classList.add("celebrate");
+}
+
+function nudgePetForMistake() {
+  updatePet({ mood: -1 }, "这个键有点卡，我们慢一点。");
+}
+
+function decayPet() {
+  const pet = profile.pet;
+  const elapsedMinutes = Math.floor((Date.now() - (pet.lastCare || Date.now())) / 60000);
+  if (elapsedMinutes < 8) return;
+  pet.health = clampStat(pet.health - Math.min(8, Math.floor(elapsedMinutes / 8)));
+  pet.mood = clampStat(pet.mood - Math.min(10, Math.floor(elapsedMinutes / 6)));
+  pet.energy = clampStat(pet.energy - Math.min(12, Math.floor(elapsedMinutes / 5)));
+  pet.lastCare = Date.now();
+  petSay("有点没精神，背一个词就能恢复。");
+  renderPet();
+  saveState();
+}
+
+function bindPetDrag() {
+  let start = null;
+  const handle = elements.petCard;
+  if (!handle) return;
+  handle.addEventListener("pointerdown", (event) => {
+    if (event.target.closest("button, input, select, summary")) return;
+    const rect = elements.deskPet.getBoundingClientRect();
+    start = {
+      pointerId: event.pointerId,
+      dx: event.clientX - rect.left,
+      dy: event.clientY - rect.top
+    };
+    elements.deskPet.classList.add("dragging");
+    handle.setPointerCapture(event.pointerId);
+  });
+  handle.addEventListener("pointermove", (event) => {
+    if (!start || event.pointerId !== start.pointerId) return;
+    const width = elements.deskPet.offsetWidth;
+    const height = elements.deskPet.offsetHeight;
+    const x = Math.max(8, Math.min(window.innerWidth - width - 8, event.clientX - start.dx));
+    const y = Math.max(8, Math.min(window.innerHeight - height - 8, event.clientY - start.dy));
+    elements.deskPet.style.left = `${x}px`;
+    elements.deskPet.style.top = `${y}px`;
+    elements.deskPet.style.right = "auto";
+    elements.deskPet.style.bottom = "auto";
+  });
+  handle.addEventListener("pointerup", (event) => {
+    if (!start || event.pointerId !== start.pointerId) return;
+    const rect = elements.deskPet.getBoundingClientRect();
+    profile.pet.x = Math.round(rect.left);
+    profile.pet.y = Math.round(rect.top);
+    saveState();
+    elements.deskPet.classList.remove("dragging");
+    start = null;
+  });
+}
+
 async function analyzeWithAi(extraQuestion = "") {
   const context = buildAiContext(extraQuestion);
   renderAiContextPreview();
@@ -1424,6 +1613,26 @@ function bindEvents() {
     const question = elements.aiQuestion.value.trim();
     analyzeWithAi(question);
   });
+
+  elements.petMinimizeButton.addEventListener("click", () => {
+    profile.pet.collapsed = true;
+    saveState();
+    renderPet();
+  });
+  elements.petDockButton.addEventListener("click", () => {
+    profile.pet.collapsed = false;
+    saveState();
+    renderPet();
+  });
+  elements.petAvatar.addEventListener("click", () => updatePet({ mood: 6, energy: -1 }, "摸摸有效，继续练一个词吧。"));
+  elements.petFeedButton.addEventListener("click", () => updatePet({ health: 10, mood: 2, energy: -2 }, "补充好了，不过真正恢复还是靠背词。"));
+  elements.petPlayButton.addEventListener("click", () => updatePet({ mood: 10, energy: -4 }, "互动完成，心情变好了。"));
+  elements.petSleepButton.addEventListener("click", () => {
+    profile.pet.sleeping = !profile.pet.sleeping;
+    updatePet(profile.pet.sleeping ? { energy: 12, mood: 2 } : { energy: 0 }, profile.pet.sleeping ? "我小睡一会儿，背词时会醒来。" : "醒了，继续陪你练。");
+  });
+  bindPetDrag();
+  setInterval(decayPet, 60000);
 
   elements.themeButton.addEventListener("click", () => {
     const themes = ["light", "ink", "green"];

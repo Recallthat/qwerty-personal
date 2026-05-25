@@ -489,6 +489,10 @@ textarea:focus {
 }
 
 .target-word {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.02em;
   min-height: 74px;
   max-width: 100%;
   overflow-wrap: anywhere;
@@ -502,11 +506,49 @@ textarea:focus {
   text-shadow: 0 0 14px var(--muted);
 }
 
+.target-char {
+  position: relative;
+  display: inline-block;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 2px color-mix(in srgb, var(--text) 42%, transparent);
+  paint-order: stroke fill;
+  transition: color 0.12s ease, -webkit-text-fill-color 0.12s ease, transform 0.12s ease;
+}
+
+.target-char.filled {
+  color: var(--text);
+  -webkit-text-fill-color: var(--text);
+  -webkit-text-stroke-color: var(--text);
+}
+
+.target-char.current::after {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -0.12em;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.target-char.wrong {
+  color: var(--bad);
+  -webkit-text-fill-color: var(--bad);
+  -webkit-text-stroke-color: var(--bad);
+  transform: translateY(-2px);
+}
+
+.target-word.hidden .target-char {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke-color: transparent;
+  text-shadow: 0 0 14px var(--muted);
+}
+
 .typed-word {
-  min-height: 34px;
-  font-size: 24px;
-  font-weight: 800;
-  text-align: center;
+  display: none;
 }
 
 .translation {
@@ -616,15 +658,6 @@ textarea:focus {
   color: var(--muted);
   font-style: normal;
   font-size: 0.86em;
-}
-
-.typed-word .ok {
-  color: var(--good);
-}
-
-.typed-word .bad {
-  color: var(--bad);
-  text-decoration: underline;
 }
 
 #typingInput {
@@ -989,6 +1022,219 @@ dialog::backdrop {
   transform: translateX(-50%) translateY(0);
 }
 
+.desk-pet {
+  position: fixed;
+  right: 26px;
+  bottom: 26px;
+  z-index: 30;
+  width: 220px;
+  user-select: none;
+}
+
+.pet-bubble {
+  width: fit-content;
+  max-width: 220px;
+  margin: 0 0 8px auto;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.pet-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel) 92%, var(--accent) 8%);
+  box-shadow: var(--shadow);
+}
+
+.pet-head,
+.pet-progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pet-head strong,
+.pet-head span {
+  display: block;
+}
+
+.pet-head span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.pet-minimize {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  font-size: 20px;
+}
+
+.pet-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 92px;
+  margin: 4px auto 0;
+  border: 0;
+  border-radius: 46% 46% 42% 42%;
+  background:
+    radial-gradient(circle at 34% 38%, rgba(255,255,255,0.96) 0 8px, transparent 9px),
+    radial-gradient(circle at 66% 38%, rgba(255,255,255,0.96) 0 8px, transparent 9px),
+    linear-gradient(145deg, #61d394, #228f78);
+  color: #0d2723;
+  box-shadow: inset 0 -10px 18px rgba(0, 0, 0, 0.12), 0 14px 22px rgba(19, 55, 48, 0.18);
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.pet-avatar:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.pet-avatar.low {
+  filter: grayscale(0.4) saturate(0.7);
+}
+
+.pet-avatar.sleeping {
+  background: linear-gradient(145deg, #9fb3c8, #637487);
+}
+
+.pet-ear {
+  position: absolute;
+  top: -11px;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: #228f78;
+  transform: rotate(45deg);
+}
+
+.pet-ear.left {
+  left: 16px;
+}
+
+.pet-ear.right {
+  right: 16px;
+}
+
+.pet-face {
+  position: relative;
+  z-index: 1;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.pet-bars {
+  display: grid;
+  gap: 7px;
+}
+
+.pet-bars label {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.pet-bars i {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.pet-bars b {
+  display: block;
+  height: 100%;
+  width: 50%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.pet-bars em {
+  font-style: normal;
+  text-align: right;
+}
+
+.pet-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.pet-actions button,
+.pet-dock {
+  min-height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.pet-progress {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.pet-progress strong {
+  color: var(--text);
+}
+
+.pet-dock {
+  display: none;
+  width: 56px;
+  height: 56px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  box-shadow: var(--shadow);
+}
+
+.desk-pet.collapsed {
+  width: 66px;
+}
+
+.desk-pet.collapsed .pet-card,
+.desk-pet.collapsed .pet-bubble {
+  display: none;
+}
+
+.desk-pet.collapsed .pet-dock {
+  display: block;
+}
+
+.desk-pet.dragging .pet-card,
+.desk-pet.dragging .pet-dock {
+  cursor: grabbing;
+}
+
+.pet-avatar.celebrate {
+  animation: petCelebrate 0.6s ease;
+}
+
+@keyframes petCelebrate {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  35% { transform: translateY(-10px) rotate(-5deg); }
+  70% { transform: translateY(-3px) rotate(5deg); }
+}
+
 @media (max-width: 1040px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -1041,5 +1287,11 @@ dialog::backdrop {
 
   .bar-chart {
     grid-template-columns: repeat(5, minmax(32px, 1fr));
+  }
+
+  .desk-pet {
+    right: 14px;
+    bottom: 14px;
+    width: min(220px, calc(100vw - 28px));
   }
 }
