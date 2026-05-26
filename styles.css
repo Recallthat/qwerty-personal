@@ -1301,6 +1301,11 @@ dialog::backdrop {
   animation: petGlow 1.6s ease-in-out infinite alternate;
 }
 
+.pet-avatar.has-art {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
 .pet-avatar.skin-default,
 .skin-preview.skin-default {
   background:
@@ -1501,6 +1506,80 @@ dialog::backdrop {
   color: var(--line-art);
   box-shadow: none;
   isolation: isolate;
+}
+
+.pet-character {
+  display: none;
+}
+
+.pet-avatar.has-art {
+  width: 188px;
+  height: 210px;
+  margin: -4px auto -6px;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.pet-avatar.has-art .pet-character {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  z-index: 4;
+  display: block;
+  width: 184px;
+  max-width: none;
+  height: auto;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 16px 20px rgba(24, 39, 69, 0.18));
+  pointer-events: none;
+}
+
+.pet-avatar.has-art::before,
+.pet-avatar.has-art .pet-hair-back,
+.pet-avatar.has-art .pet-head-shape,
+.pet-avatar.has-art .pet-ear,
+.pet-avatar.has-art .pet-hair-side,
+.pet-avatar.has-art .pet-bang,
+.pet-avatar.has-art .pet-eye,
+.pet-avatar.has-art .pet-glasses,
+.pet-avatar.has-art .pet-mouth,
+.pet-avatar.has-art .pet-hand,
+.pet-avatar.has-art .pet-outfit,
+.pet-avatar.has-art .pet-face {
+  display: none;
+}
+
+.pet-avatar.has-art.skin-rainbow .pet-character {
+  filter: hue-rotate(24deg) saturate(1.12) drop-shadow(0 16px 20px rgba(83, 72, 172, 0.2));
+}
+
+.pet-avatar.has-art.skin-neon .pet-character {
+  filter: hue-rotate(62deg) saturate(1.22) contrast(1.05) drop-shadow(0 0 16px rgba(34, 211, 238, 0.34));
+}
+
+.pet-avatar.has-art.skin-cat-moe .pet-character {
+  filter: hue-rotate(128deg) saturate(1.08) brightness(1.04) drop-shadow(0 16px 20px rgba(255, 120, 180, 0.2));
+}
+
+.pet-avatar.has-art.skin-cat-grace .pet-character {
+  filter: sepia(0.18) saturate(0.92) brightness(0.98) drop-shadow(0 16px 20px rgba(120, 81, 55, 0.18));
+}
+
+.pet-avatar.has-art.skin-cat-queen .pet-character {
+  filter: hue-rotate(58deg) saturate(1.18) brightness(0.96) drop-shadow(0 0 18px rgba(180, 92, 255, 0.28));
+}
+
+.pet-avatar.has-art.skin-sunny-boy .pet-character {
+  filter: hue-rotate(186deg) saturate(1.06) brightness(1.04) drop-shadow(0 16px 20px rgba(224, 145, 45, 0.18));
+}
+
+.pet-avatar.has-art.skin-cool-prince .pet-character {
+  filter: saturate(0.92) brightness(1.04) drop-shadow(0 16px 20px rgba(65, 110, 156, 0.2));
+}
+
+.pet-avatar.has-art.skin-star-idol .pet-character {
+  filter: hue-rotate(44deg) saturate(1.28) contrast(1.05) drop-shadow(0 0 18px rgba(255, 78, 205, 0.28));
 }
 
 .pet-avatar::before {

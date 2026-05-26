@@ -342,6 +342,7 @@ const elements = {
   petMoodLabel: $("#petMoodLabel"),
   petFace: $("#petFace"),
   petAvatar: $("#petAvatar"),
+  petCharacter: $("#petCharacter"),
   petMinimizeButton: $("#petMinimizeButton"),
   petDockButton: $("#petDockButton"),
   petFeedButton: $("#petFeedButton"),
@@ -1372,7 +1373,7 @@ function applyPetLook() {
   const outfit = { ...(profile.pet.outfit || {}), ...(preview.outfit || {}) };
   const skinId = preview.skin || profile.pet.skin;
   const skin = petSkins.find((item) => item.id === skinId) || petSkins[0];
-  elements.petAvatar.className = `pet-avatar ${skin.className}`;
+  elements.petAvatar.className = `pet-avatar has-art ${skin.className}`;
   elements.petAvatar.dataset.skinLabel = skin.label;
   [
     ["upper", elements.petUpperLayer],
