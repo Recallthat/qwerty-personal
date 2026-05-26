@@ -1213,22 +1213,19 @@ dialog::backdrop {
   position: relative;
   display: grid;
   place-items: center;
-  width: 104px;
-  height: 92px;
-  margin: 4px auto 0;
+  width: 188px;
+  height: 210px;
+  margin: -4px auto -6px;
   border: 0;
-  border-radius: 46% 46% 42% 42%;
-  background:
-    radial-gradient(circle at 34% 38%, rgba(255,255,255,0.96) 0 8px, transparent 9px),
-    radial-gradient(circle at 66% 38%, rgba(255,255,255,0.96) 0 8px, transparent 9px),
-    linear-gradient(145deg, #61d394, #228f78);
+  border-radius: 0;
+  background: transparent;
   color: #0d2723;
-  box-shadow: inset 0 -10px 18px rgba(0, 0, 0, 0.12), 0 14px 22px rgba(19, 55, 48, 0.18);
+  box-shadow: none;
   transition: transform 0.18s ease, filter 0.18s ease;
+  isolation: isolate;
 }
 
-.pet-avatar::after,
-.skin-preview::after {
+.pet-avatar::after {
   content: attr(data-skin-label);
 }
 
@@ -1253,60 +1250,51 @@ dialog::backdrop {
 }
 
 .pet-avatar.sleeping {
-  background: linear-gradient(145deg, #9fb3c8, #637487);
+  background: transparent;
 }
 
-.pet-avatar.skin-rainbow,
 .skin-preview.skin-rainbow {
   background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #b96dff);
   animation: rainbowShift 3s linear infinite;
 }
 
-.pet-avatar.skin-neon,
 .skin-preview.skin-neon {
   background: radial-gradient(circle at 30% 30%, #ffffff 0 8px, transparent 9px), linear-gradient(135deg, #101827, #22d3ee, #a855f7);
   box-shadow: 0 0 20px rgba(34, 211, 238, 0.45), inset 0 -10px 18px rgba(0, 0, 0, 0.22);
 }
 
-.pet-avatar.skin-cat-moe,
 .skin-preview.skin-cat-moe {
   background: linear-gradient(145deg, #ffd6e7, #ff8fc3);
 }
 
-.pet-avatar.skin-cat-grace,
 .skin-preview.skin-cat-grace {
   background: linear-gradient(145deg, #7c5f4f, #d8b08c);
 }
 
-.pet-avatar.skin-cat-queen,
 .skin-preview.skin-cat-queen {
   background: linear-gradient(145deg, #2b183f, #b45cff);
   box-shadow: 0 0 22px rgba(180, 92, 255, 0.36), inset 0 -10px 18px rgba(0, 0, 0, 0.22);
 }
 
-.pet-avatar.skin-sunny-boy,
 .skin-preview.skin-sunny-boy {
   background: linear-gradient(145deg, #ffe082, #ff9f43);
 }
 
-.pet-avatar.skin-cool-prince,
 .skin-preview.skin-cool-prince {
   background: linear-gradient(145deg, #d9e7ff, #4b6584);
 }
 
-.pet-avatar.skin-star-idol,
 .skin-preview.skin-star-idol {
   background: radial-gradient(circle at 30% 25%, #fff 0 8px, transparent 9px), linear-gradient(135deg, #161629, #ff4ecd, #00e5ff);
   box-shadow: 0 0 24px rgba(255, 78, 205, 0.38), 0 0 28px rgba(0, 229, 255, 0.24);
   animation: petGlow 1.6s ease-in-out infinite alternate;
 }
 
-.pet-avatar.has-art {
+.pet-avatar {
   background: transparent !important;
   box-shadow: none !important;
 }
 
-.pet-avatar.skin-default,
 .skin-preview.skin-default {
   background:
     radial-gradient(circle at 34% 38%, rgba(255,255,255,0.96) 0 8px, transparent 9px),
@@ -1497,9 +1485,9 @@ dialog::backdrop {
   --skin-tone: #ffd9c8;
   --line-art: #1d2538;
   --jacket: #d77286;
-  width: 152px;
-  height: 176px;
-  margin-top: 2px;
+  width: 188px;
+  height: 210px;
+  margin: -4px auto -6px;
   overflow: visible;
   border-radius: 0;
   background: transparent;
@@ -1509,19 +1497,6 @@ dialog::backdrop {
 }
 
 .pet-character {
-  display: none;
-}
-
-.pet-avatar.has-art {
-  width: 188px;
-  height: 210px;
-  margin: -4px auto -6px;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.pet-avatar.has-art .pet-character {
   position: absolute;
   left: 50%;
   bottom: 0;
@@ -1535,54 +1510,58 @@ dialog::backdrop {
   pointer-events: none;
 }
 
-.pet-avatar.has-art::before,
-.pet-avatar.has-art .pet-hair-back,
-.pet-avatar.has-art .pet-head-shape,
-.pet-avatar.has-art .pet-ear,
-.pet-avatar.has-art .pet-hair-side,
-.pet-avatar.has-art .pet-bang,
-.pet-avatar.has-art .pet-eye,
-.pet-avatar.has-art .pet-glasses,
-.pet-avatar.has-art .pet-mouth,
-.pet-avatar.has-art .pet-hand,
-.pet-avatar.has-art .pet-outfit,
-.pet-avatar.has-art .pet-face {
+.pet-avatar::before,
+.pet-avatar .pet-hair-back,
+.pet-avatar .pet-head-shape,
+.pet-avatar .pet-ear,
+.pet-avatar .pet-hair-side,
+.pet-avatar .pet-bang,
+.pet-avatar .pet-eye,
+.pet-avatar .pet-glasses,
+.pet-avatar .pet-mouth,
+.pet-avatar .pet-hand,
+.pet-avatar .pet-outfit,
+.pet-avatar .pet-face {
   display: none;
 }
 
-.pet-avatar.has-art.skin-rainbow .pet-character {
+.pet-avatar.skin-rainbow .pet-character {
   filter: hue-rotate(24deg) saturate(1.12) drop-shadow(0 16px 20px rgba(83, 72, 172, 0.2));
 }
 
-.pet-avatar.has-art.skin-neon .pet-character {
+.pet-avatar.skin-neon .pet-character {
   filter: hue-rotate(62deg) saturate(1.22) contrast(1.05) drop-shadow(0 0 16px rgba(34, 211, 238, 0.34));
 }
 
-.pet-avatar.has-art.skin-cat-moe .pet-character {
+.pet-avatar.skin-cat-moe .pet-character {
   filter: hue-rotate(128deg) saturate(1.08) brightness(1.04) drop-shadow(0 16px 20px rgba(255, 120, 180, 0.2));
 }
 
-.pet-avatar.has-art.skin-cat-grace .pet-character {
+.pet-avatar.skin-cat-grace .pet-character {
   filter: sepia(0.18) saturate(0.92) brightness(0.98) drop-shadow(0 16px 20px rgba(120, 81, 55, 0.18));
 }
 
-.pet-avatar.has-art.skin-cat-queen .pet-character {
+.pet-avatar.skin-cat-queen .pet-character {
   filter: hue-rotate(58deg) saturate(1.18) brightness(0.96) drop-shadow(0 0 18px rgba(180, 92, 255, 0.28));
 }
 
-.pet-avatar.has-art.skin-sunny-boy .pet-character {
+.pet-avatar.skin-sunny-boy .pet-character {
   filter: hue-rotate(186deg) saturate(1.06) brightness(1.04) drop-shadow(0 16px 20px rgba(224, 145, 45, 0.18));
 }
 
-.pet-avatar.has-art.skin-cool-prince .pet-character {
+.pet-avatar.skin-cool-prince .pet-character {
   filter: saturate(0.92) brightness(1.04) drop-shadow(0 16px 20px rgba(65, 110, 156, 0.2));
 }
 
-.pet-avatar.has-art.skin-star-idol .pet-character {
+.pet-avatar.skin-star-idol .pet-character {
   filter: hue-rotate(44deg) saturate(1.28) contrast(1.05) drop-shadow(0 0 18px rgba(255, 78, 205, 0.28));
 }
 
-.pet-avatar::before {
+.pet-avatar .pet-character + .pet-hair-back ~ .pet-face {
+  display: none;
+}
+
+.pet-avatar:not(:has(.pet-character))::before {
   content: "";
   position: absolute;
   left: 24px;
@@ -2098,10 +2077,55 @@ dialog::backdrop {
 .skin-preview {
   position: relative;
   display: block;
-  width: 42px;
-  height: 34px;
-  border-radius: 46% 46% 42% 42%;
-  background: linear-gradient(145deg, #61d394, #228f78);
+  width: 64px;
+  height: 76px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--panel)) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.skin-preview::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 72px;
+  height: 88px;
+  transform: translateX(-50%);
+  background: url("assets/pets/aoi-study.webp") center bottom / contain no-repeat;
+}
+
+.skin-preview.skin-rainbow::before {
+  filter: hue-rotate(24deg) saturate(1.12);
+}
+
+.skin-preview.skin-neon::before {
+  filter: hue-rotate(62deg) saturate(1.22) contrast(1.05);
+}
+
+.skin-preview.skin-cat-moe::before {
+  filter: hue-rotate(128deg) saturate(1.08) brightness(1.04);
+}
+
+.skin-preview.skin-cat-grace::before {
+  filter: sepia(0.18) saturate(0.92) brightness(0.98);
+}
+
+.skin-preview.skin-cat-queen::before {
+  filter: hue-rotate(58deg) saturate(1.18) brightness(0.96);
+}
+
+.skin-preview.skin-sunny-boy::before {
+  filter: hue-rotate(186deg) saturate(1.06) brightness(1.04);
+}
+
+.skin-preview.skin-cool-prince::before {
+  filter: saturate(0.92) brightness(1.04);
+}
+
+.skin-preview.skin-star-idol::before {
+  filter: hue-rotate(44deg) saturate(1.28) contrast(1.05);
 }
 
 .skin-card strong,
