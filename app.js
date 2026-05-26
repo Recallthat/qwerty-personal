@@ -104,56 +104,22 @@ const petSkins = [
   { id: "star_idol", name: "星辉偶像", price: 220, label: "稀有", className: "skin-star-idol", theme: "idol" }
 ];
 
+const petSuits = [
+  { id: "study", name: "红开衫学习装", price: 0, label: "默认", image: "assets/pets/aoi-study.webp", theme: "mint" },
+  { id: "mint", name: "薄荷卫衣", price: 80, label: "卫衣", image: "assets/pets/aoi-mint.webp", theme: "mint" },
+  { id: "school", name: "学院西装", price: 120, label: "学院", image: "assets/pets/aoi-school.webp", theme: "sky" },
+  { id: "tea", name: "午后茶会", price: 150, label: "茶会", image: "assets/pets/aoi-tea.webp", theme: "latte" },
+  { id: "idol", name: "星光偶像", price: 220, label: "偶像", image: "assets/pets/aoi-idol.webp", theme: "idol" }
+];
+
 const themeOrder = ["light", "mint", "sky", "sakura", "citrus", "lavender", "candy", "aurora", "latte", "idol", "ink", "green"];
 
 const petShopTabs = [
-  { id: "skin", label: "皮肤", items: petSkins },
-  {
-    id: "upper",
-    label: "上衣",
-    items: [
-      { id: "upper_sailor", name: "海风短衫", price: 0, label: "初始", className: "upper-sailor" },
-      { id: "upper_hoodie", name: "薄荷卫衣", price: 35, label: "清爽", className: "upper-hoodie" },
-      { id: "upper_cardigan", name: "樱粉开衫", price: 55, label: "柔和", className: "upper-cardigan" },
-      { id: "upper_blazer", name: "海盐外套", price: 75, label: "利落", className: "upper-blazer" },
-      { id: "upper_hanfu", name: "青竹小袄", price: 95, label: "雅致", className: "upper-hanfu" },
-      { id: "upper_idol", name: "星光夹克", price: 140, label: "舞台", className: "upper-idol" }
-    ]
-  },
-  {
-    id: "lower",
-    label: "下装",
-    items: [
-      { id: "lower_skirt", name: "浅蓝短裙", price: 0, label: "初始", className: "lower-skirt" },
-      { id: "lower_shorts", name: "柠檬短裤", price: 35, label: "轻快", className: "lower-shorts" },
-      { id: "lower_trousers", name: "灰蓝长裤", price: 60, label: "干净", className: "lower-trousers" },
-      { id: "lower_longskirt", name: "紫藤长裙", price: 85, label: "优雅", className: "lower-longskirt" },
-      { id: "lower_tech", name: "极光机能裤", price: 120, label: "极光", className: "lower-tech" }
-    ]
-  },
-  {
-    id: "shoes",
-    label: "鞋子",
-    items: [
-      { id: "shoes_canvas", name: "白色帆布鞋", price: 0, label: "初始", className: "shoes-canvas" },
-      { id: "shoes_loafers", name: "茶色乐福鞋", price: 30, label: "学院", className: "shoes-loafers" },
-      { id: "shoes_boots", name: "短靴", price: 55, label: "利落", className: "shoes-boots" },
-      { id: "shoes_neon", name: "星光运动鞋", price: 90, label: "闪耀", className: "shoes-neon" }
-    ]
-  },
-  {
-    id: "socks",
-    label: "裤袜",
-    items: [
-      { id: "socks_white", name: "白色短袜", price: 0, label: "初始", className: "socks-white" },
-      { id: "socks_knee", name: "海盐长袜", price: 25, label: "清新", className: "socks-knee" },
-      { id: "socks_ribbon", name: "樱粉缎带袜", price: 45, label: "可爱", className: "socks-ribbon" },
-      { id: "socks_star", name: "星点裤袜", price: 75, label: "星点", className: "socks-star" }
-    ]
-  }
+  { id: "suit", label: "套装", items: petSuits },
+  { id: "skin", label: "光效", items: petSkins }
 ];
 
-let activePetShopTab = "skin";
+let activePetShopTab = "suit";
 let petPreview = null;
 let petPreviewTimer = null;
 
@@ -207,6 +173,8 @@ const defaultProfile = (name = "我的账号") => ({
     sleeping: false,
     lastCare: Date.now(),
     lastNapAt: 0,
+    suit: "study",
+    suitsOwned: ["study"],
     skin: "default",
     skinsOwned: ["default"],
     outfit: {
@@ -348,6 +316,8 @@ const elements = {
   petFeedButton: $("#petFeedButton"),
   petPlayButton: $("#petPlayButton"),
   petSleepButton: $("#petSleepButton"),
+  petWaveButton: $("#petWaveButton"),
+  petFocusButton: $("#petFocusButton"),
   petHealthBar: $("#petHealthBar"),
   petMoodBar: $("#petMoodBar"),
   petEnergyBar: $("#petEnergyBar"),
@@ -403,7 +373,8 @@ function migrateProfile(input) {
       name: migratedPetName,
       outfit: { ...base.pet.outfit, ...(inputPet.outfit || {}) },
       outfitsOwned: { ...base.pet.outfitsOwned, ...(inputPet.outfitsOwned || {}) },
-      skinsOwned: inputPet.skinsOwned || base.pet.skinsOwned
+      skinsOwned: inputPet.skinsOwned || base.pet.skinsOwned,
+      suitsOwned: inputPet.suitsOwned || base.pet.suitsOwned
     }
   };
 }
@@ -1371,10 +1342,16 @@ function getPetOutfitItem(type, id) {
 function applyPetLook() {
   const preview = petPreview || {};
   const outfit = { ...(profile.pet.outfit || {}), ...(preview.outfit || {}) };
+  const suitId = preview.suit || profile.pet.suit || "study";
+  const suit = petSuits.find((item) => item.id === suitId) || petSuits[0];
   const skinId = preview.skin || profile.pet.skin;
   const skin = petSkins.find((item) => item.id === skinId) || petSkins[0];
   elements.petAvatar.className = `pet-avatar has-art ${skin.className}`;
   elements.petAvatar.dataset.skinLabel = skin.label;
+  if (elements.petCharacter) {
+    elements.petCharacter.src = suit.image;
+    elements.petCharacter.alt = suit.name;
+  }
   [
     ["upper", elements.petUpperLayer],
     ["lower", elements.petLowerLayer],
@@ -1396,21 +1373,24 @@ function renderPetShop() {
     `).join("");
   }
   if (elements.petShopHint) {
-    elements.petShopHint.textContent = "左键解锁/穿戴，右键预览。换皮肤会同步切换网页主题。";
+    elements.petShopHint.textContent = "左键解锁/穿戴，右键预览。套装会直接更换角色立绘。";
   }
-  const owned = activeTab.id === "skin"
+  const owned = activeTab.id === "suit"
+    ? new Set(profile.pet.suitsOwned || ["study"])
+    : activeTab.id === "skin"
     ? new Set(profile.pet.skinsOwned || ["default"])
     : new Set(profile.pet.outfitsOwned?.[activeTab.id] || []);
-  const activeId = activeTab.id === "skin" ? profile.pet.skin : profile.pet.outfit?.[activeTab.id];
+  const activeId = activeTab.id === "suit" ? profile.pet.suit : activeTab.id === "skin" ? profile.pet.skin : profile.pet.outfit?.[activeTab.id];
   elements.petSkinGrid.innerHTML = activeTab.items.map((item) => {
     const isOwned = owned.has(item.id);
     const active = activeId === item.id;
-    const previewing = activeTab.id === "skin" ? petPreview?.skin === item.id : petPreview?.outfit?.[activeTab.id] === item.id;
+    const previewing = activeTab.id === "suit" ? petPreview?.suit === item.id : activeTab.id === "skin" ? petPreview?.skin === item.id : petPreview?.outfit?.[activeTab.id] === item.id;
     const action = active ? "使用中" : isOwned ? "换上" : `${item.price} 精力`;
-    const previewClass = activeTab.id === "skin" ? "skin-preview" : `outfit-preview ${activeTab.id}`;
+    const previewClass = activeTab.id === "suit" ? "suit-preview" : activeTab.id === "skin" ? "skin-preview" : `outfit-preview ${activeTab.id}`;
+    const style = activeTab.id === "suit" ? ` style="--suit-image: url('${item.image}')"` : "";
     return `
       <button class="skin-card ${active ? "active" : ""} ${previewing ? "previewing" : ""}" type="button" data-shop-type="${activeTab.id}" data-shop-id="${item.id}">
-        <span class="${previewClass} ${item.className}" data-skin-label="${item.label}"></span>
+        <span class="${previewClass} ${item.className || ""}" data-skin-label="${item.label}"${style}></span>
         <strong>${item.name}</strong>
         <em>${action}</em>
       </button>
@@ -1419,6 +1399,7 @@ function renderPetShop() {
 }
 
 function unlockOrEquipPetItem(type, itemId) {
+  if (type === "suit") return choosePetSuit(itemId);
   if (type === "skin") return choosePetSkin(itemId);
   const tab = petShopTabs.find((item) => item.id === type);
   const item = tab?.items.find((entry) => entry.id === itemId);
@@ -1446,14 +1427,15 @@ function unlockOrEquipPetItem(type, itemId) {
 
 function previewPetItem(type, itemId) {
   if (petPreviewTimer) clearTimeout(petPreviewTimer);
-  petPreview = type === "skin"
+  petPreview = type === "suit"
+    ? { suit: itemId, outfit: {} }
+    : type === "skin"
     ? { skin: itemId, outfit: {} }
     : { outfit: { [type]: itemId } };
   const tab = petShopTabs.find((item) => item.id === type);
   const item = tab?.items.find((entry) => entry.id === itemId);
-  if (type === "skin") {
-    const skin = petSkins.find((entry) => entry.id === itemId);
-    document.body.className = `theme-${skin?.theme || profile.theme || "light"}`;
+  if (type === "skin" || type === "suit") {
+    document.body.className = `theme-${item?.theme || profile.theme || "light"}`;
   }
   petSay(`预览 ${item?.name || "装扮"}，5 秒后自动恢复。`);
   renderPet();
@@ -1491,6 +1473,30 @@ function choosePetSkin(skinId) {
   saveState();
 }
 
+function choosePetSuit(suitId) {
+  const suit = petSuits.find((item) => item.id === suitId);
+  if (!suit) return;
+  profile.pet.suitsOwned ||= ["study"];
+  const owned = profile.pet.suitsOwned.includes(suitId);
+  if (!owned) {
+    if (profile.pet.energy < suit.price) {
+      petSay(`还差 ${suit.price - profile.pet.energy} 精力，背几个词再来解锁。`);
+      return;
+    }
+    profile.pet.energy = Math.max(0, Math.round(profile.pet.energy - suit.price));
+    profile.pet.suitsOwned.push(suitId);
+    petSay(`解锁了 ${suit.name}。`);
+  } else {
+    petSay(`换上 ${suit.name}。`);
+  }
+  profile.pet.suit = suitId;
+  profile.theme = suit.theme || profile.theme;
+  if (elements.themeSetting) elements.themeSetting.value = profile.theme;
+  clearPetPreview();
+  triggerPetAction("change", `青柚换上了 ${suit.name}。`, { mood: 4 });
+  saveState();
+}
+
 function updatePet(delta, message = "") {
   const pet = profile.pet;
   pet.health = clampStat(pet.health + (delta.health || 0));
@@ -1506,6 +1512,29 @@ function updatePet(delta, message = "") {
   if (message) petSay(message);
   renderPet();
   saveState();
+}
+
+function triggerPetAction(action, message = "", delta = {}) {
+  if (action !== "sleep") profile.pet.sleeping = false;
+  updatePet(delta, message);
+  if (elements.petAvatar) {
+    const actionClasses = ["action-pat", "action-play", "action-wave", "action-focus", "action-change"];
+    elements.petAvatar.classList.remove(...actionClasses);
+    void elements.petAvatar.offsetWidth;
+    elements.petAvatar.classList.add(`action-${action}`);
+    window.setTimeout(() => elements.petAvatar?.classList.remove(`action-${action}`), 900);
+  }
+}
+
+function randomPetIdleTalk() {
+  if (!profile?.pet || profile.pet.collapsed || profile.pet.sleeping) return;
+  const lines = [
+    "我在旁边陪练，背完一个词就给你加 1 精力。",
+    "今天可以先冲一个小目标，不用一次背太多。",
+    "要不要换套装？精力够了就可以解锁。",
+    "手感卡住的时候，慢一点反而更稳。"
+  ];
+  petSay(lines[Math.floor(Math.random() * lines.length)]);
 }
 
 function rewardPetForWord(word) {
@@ -1858,9 +1887,11 @@ function bindEvents() {
     saveState();
     renderPet();
   });
-  elements.petAvatar.addEventListener("click", () => updatePet({ mood: 6 }, "摸摸有效，继续练一个词吧。"));
-  elements.petFeedButton.addEventListener("click", () => updatePet({ health: 10, mood: 2 }, "补充好了，不过精力主要还是靠背词。"));
-  elements.petPlayButton.addEventListener("click", () => updatePet({ mood: 10 }, "互动完成，心情变好了。"));
+  elements.petAvatar.addEventListener("click", () => triggerPetAction("pat", "摸摸有效，青柚精神了一点。", { mood: 6 }));
+  elements.petFeedButton.addEventListener("click", () => triggerPetAction("pat", "补充好了，不过精力主要还是靠背词。", { health: 10, mood: 2 }));
+  elements.petPlayButton.addEventListener("click", () => triggerPetAction("play", "跳跳互动完成，心情变好了。", { mood: 10 }));
+  elements.petWaveButton?.addEventListener("click", () => triggerPetAction("wave", "青柚向你打招呼：今天也一起练吧。", { mood: 3 }));
+  elements.petFocusButton?.addEventListener("click", () => triggerPetAction("focus", "进入陪练模式：接下来 10 个词我都看着你。", { mood: 4, health: 2 }));
   elements.petSleepButton.addEventListener("click", () => {
     profile.pet.sleeping = !profile.pet.sleeping;
     if (profile.pet.sleeping) {
@@ -1891,6 +1922,7 @@ function bindEvents() {
   });
   bindPetDrag();
   setInterval(decayPet, 60000);
+  setInterval(randomPetIdleTalk, 45000);
 
   elements.themeButton.addEventListener("click", () => {
     profile.theme = themeOrder[(themeOrder.indexOf(profile.theme) + 1) % themeOrder.length] || "light";
