@@ -1638,8 +1638,8 @@ dialog::backdrop {
 
 .pet-motion-layer i {
   position: absolute;
-  left: calc(14% + (var(--i) % 4) * 22%);
-  top: calc(8% + (var(--i) % 3) * 22%);
+  left: var(--x, 50%);
+  top: var(--y, 22%);
   min-width: 22px;
   min-height: 22px;
   display: grid;
@@ -1671,7 +1671,7 @@ dialog::backdrop {
 .pet-avatar.actioning[data-motion="hungry"] .pet-motion-layer i,
 .pet-avatar.actioning[data-motion="sleepy"] .pet-motion-layer i,
 .pet-avatar.actioning[data-motion="review"] .pet-motion-layer i {
-  left: calc(8% + (var(--i) % 4) * 24%);
+  margin-left: -8px;
 }
 
 .pet-avatar::before,
@@ -1802,6 +1802,56 @@ dialog::backdrop {
 
 .pet-avatar.action-music .pet-character {
   animation: petMusic 1.7s ease both;
+}
+
+.pet-avatar.actioning .pet-character {
+  transform-origin: 50% 86%;
+  animation-duration: var(--pet-action-duration, 1400ms) !important;
+  animation-timing-function: cubic-bezier(0.22, 0.84, 0.28, 1) !important;
+  animation-fill-mode: both !important;
+}
+
+.pet-avatar.action-wave .pet-character { animation-name: petActWave !important; }
+.pet-avatar.action-hungry .pet-character { animation-name: petActHungry !important; }
+.pet-avatar.action-eat .pet-character { animation-name: petActEat !important; }
+.pet-avatar.action-drink .pet-character { animation-name: petActDrink !important; }
+.pet-avatar.action-sleepy .pet-character { animation-name: petActSleepy !important; }
+.pet-avatar.action-stretch .pet-character { animation-name: petActStretch !important; }
+.pet-avatar.action-focus .pet-character { animation-name: petActFocus !important; }
+.pet-avatar.action-think .pet-character { animation-name: petActThink !important; }
+.pet-avatar.action-confused .pet-character { animation-name: petActConfused !important; }
+.pet-avatar.action-cheer .pet-character { animation-name: petActCheer !important; }
+.pet-avatar.action-celebrate .pet-character { animation-name: petActCelebrate !important; }
+.pet-avatar.action-shy .pet-character { animation-name: petActShy !important; }
+.pet-avatar.action-happy .pet-character { animation-name: petActHappy !important; }
+.pet-avatar.action-angry .pet-character { animation-name: petActAngry !important; }
+.pet-avatar.action-music .pet-character { animation-name: petActMusic !important; }
+.pet-avatar.action-sparkle .pet-character { animation-name: petActSparkle !important; }
+.pet-avatar.action-exercise .pet-character { animation-name: petActExercise !important; }
+.pet-avatar.action-review .pet-character { animation-name: petActReview !important; }
+.pet-avatar.action-relax .pet-character { animation-name: petActRelax !important; }
+.pet-avatar.action-surprise .pet-character { animation-name: petActSurprise !important; }
+
+.pet-avatar.actioning .pet-motion-layer i {
+  animation-duration: var(--pet-action-duration, 1400ms);
+  animation-timing-function: cubic-bezier(0.2, 0.74, 0.22, 1);
+}
+
+.pet-avatar.actioning[data-motion="wave"] .pet-motion-layer i,
+.pet-avatar.actioning[data-motion="cheer"] .pet-motion-layer i,
+.pet-avatar.actioning[data-motion="celebrate"] .pet-motion-layer i {
+  animation-name: petActionArc;
+}
+
+.pet-avatar.actioning[data-motion="eat"] .pet-motion-layer i,
+.pet-avatar.actioning[data-motion="drink"] .pet-motion-layer i,
+.pet-avatar.actioning[data-motion="relax"] .pet-motion-layer i {
+  animation-name: petActionOrbit;
+}
+
+.pet-avatar.actioning[data-motion="music"] .pet-motion-layer i,
+.pet-avatar.actioning[data-motion="sparkle"] .pet-motion-layer i {
+  animation-name: petActionBeat;
 }
 
 .pet-avatar.frame-playing .pet-character {
@@ -2986,7 +3036,32 @@ dialog::backdrop {
   height: 54px;
   object-fit: contain;
   transform: translateX(-50%);
+  transform-origin: 50% 86%;
+  animation-duration: 1.8s;
+  animation-timing-function: cubic-bezier(0.22, 0.84, 0.28, 1);
+  animation-iteration-count: infinite;
 }
+
+.action-preview[data-motion="wave"] img { animation-name: petActWave; }
+.action-preview[data-motion="hungry"] img { animation-name: petActHungry; }
+.action-preview[data-motion="eat"] img { animation-name: petActEat; }
+.action-preview[data-motion="drink"] img { animation-name: petActDrink; }
+.action-preview[data-motion="sleepy"] img { animation-name: petActSleepy; }
+.action-preview[data-motion="stretch"] img { animation-name: petActStretch; }
+.action-preview[data-motion="focus"] img { animation-name: petActFocus; }
+.action-preview[data-motion="think"] img { animation-name: petActThink; }
+.action-preview[data-motion="confused"] img { animation-name: petActConfused; }
+.action-preview[data-motion="cheer"] img { animation-name: petActCheer; }
+.action-preview[data-motion="celebrate"] img { animation-name: petActCelebrate; }
+.action-preview[data-motion="shy"] img { animation-name: petActShy; }
+.action-preview[data-motion="happy"] img { animation-name: petActHappy; }
+.action-preview[data-motion="angry"] img { animation-name: petActAngry; }
+.action-preview[data-motion="music"] img { animation-name: petActMusic; }
+.action-preview[data-motion="sparkle"] img { animation-name: petActSparkle; }
+.action-preview[data-motion="exercise"] img { animation-name: petActExercise; }
+.action-preview[data-motion="review"] img { animation-name: petActReview; }
+.action-preview[data-motion="relax"] img { animation-name: petActRelax; }
+.action-preview[data-motion="surprise"] img { animation-name: petActSurprise; }
 
 .action-preview i {
   position: absolute;
@@ -3571,6 +3646,182 @@ dialog::backdrop {
   25% { transform: translateX(-50%) rotate(-5deg) translateY(-4px); }
   50% { transform: translateX(-50%) rotate(4deg); }
   75% { transform: translateX(-50%) rotate(-3deg) translateY(-3px); }
+}
+
+@keyframes petActWave {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+  12% { transform: translateX(-50%) translateY(-4px) rotate(-4deg); }
+  25% { transform: translateX(calc(-50% + 5px)) translateY(-8px) rotate(7deg); }
+  42% { transform: translateX(calc(-50% - 3px)) translateY(-5px) rotate(-7deg); }
+  58% { transform: translateX(calc(-50% + 4px)) translateY(-7px) rotate(6deg); }
+  76% { transform: translateX(-50%) translateY(-2px) rotate(-2deg); }
+}
+
+@keyframes petActHungry {
+  0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
+  18% { transform: translateX(-50%) translateY(5px) scale(0.98, 1.02); }
+  34% { transform: translateX(calc(-50% - 3px)) translateY(3px) rotate(-2deg); }
+  50% { transform: translateX(calc(-50% + 3px)) translateY(6px) rotate(2deg) scale(0.97, 1.03); }
+  68% { transform: translateX(-50%) translateY(2px) scale(1.01, 0.99); }
+}
+
+@keyframes petActEat {
+  0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
+  16%, 48% { transform: translateX(-50%) translateY(4px) scale(1.025, 0.975); }
+  30%, 62% { transform: translateX(calc(-50% - 2px)) translateY(0) scale(0.99, 1.01); }
+  78% { transform: translateX(-50%) translateY(-5px) scale(1.03, 0.98); }
+}
+
+@keyframes petActDrink {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+  18% { transform: translateX(calc(-50% + 4px)) translateY(1px) rotate(4deg); }
+  36% { transform: translateX(calc(-50% + 6px)) translateY(4px) rotate(7deg) scale(1.01, 0.99); }
+  56% { transform: translateX(calc(-50% + 2px)) translateY(0) rotate(1deg); }
+  76% { transform: translateX(-50%) translateY(-5px) rotate(-2deg); }
+}
+
+@keyframes petActSleepy {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg); opacity: 1; }
+  18% { transform: translateX(-50%) translateY(4px) rotate(-2deg); opacity: 0.9; }
+  42% { transform: translateX(calc(-50% - 4px)) translateY(7px) rotate(-6deg); opacity: 0.82; }
+  66% { transform: translateX(calc(-50% + 2px)) translateY(3px) rotate(3deg); opacity: 0.9; }
+}
+
+@keyframes petActStretch {
+  0%, 100% { transform: translateX(-50%) translateY(0) scale(1) rotate(0deg); }
+  18% { transform: translateX(-50%) translateY(3px) scale(0.98, 1.04); }
+  42% { transform: translateX(-50%) translateY(-14px) scale(1.08, 0.92) rotate(-4deg); }
+  66% { transform: translateX(-50%) translateY(-8px) scale(1.04, 0.96) rotate(5deg); }
+  84% { transform: translateX(-50%) translateY(1px) scale(0.99, 1.02); }
+}
+
+@keyframes petActFocus {
+  0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
+  20% { transform: translateX(-50%) translateY(-3px) scale(1.02); }
+  45% { transform: translateX(-50%) translateY(-5px) scale(1.045); }
+  70% { transform: translateX(-50%) translateY(-2px) scale(1.015); }
+}
+
+@keyframes petActThink {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+  20% { transform: translateX(calc(-50% - 3px)) translateY(-2px) rotate(-5deg); }
+  42% { transform: translateX(calc(-50% - 5px)) translateY(-3px) rotate(-7deg); }
+  64% { transform: translateX(calc(-50% + 2px)) translateY(0) rotate(3deg); }
+  82% { transform: translateX(-50%) translateY(-2px) rotate(0deg); }
+}
+
+@keyframes petActConfused {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+  12%, 36%, 60% { transform: translateX(calc(-50% - 7px)) rotate(-4deg); }
+  24%, 48%, 72% { transform: translateX(calc(-50% + 7px)) rotate(4deg); }
+  86% { transform: translateX(-50%) translateY(2px) rotate(0deg); }
+}
+
+@keyframes petActCheer {
+  0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
+  18% { transform: translateX(-50%) translateY(-10px) scale(1.04, 0.97); }
+  34% { transform: translateX(-50%) translateY(0) scale(0.99, 1.02); }
+  52% { transform: translateX(-50%) translateY(-16px) scale(1.07, 0.94) rotate(-4deg); }
+  74% { transform: translateX(-50%) translateY(-3px) rotate(5deg); }
+}
+
+@keyframes petActCelebrate {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg) scale(1); }
+  16% { transform: translateX(-50%) translateY(-12px) rotate(-10deg) scale(1.05); }
+  34% { transform: translateX(-50%) translateY(-4px) rotate(9deg) scale(1.02); }
+  52% { transform: translateX(-50%) translateY(-18px) rotate(14deg) scale(1.06); }
+  72% { transform: translateX(-50%) translateY(-6px) rotate(-6deg) scale(1.02); }
+}
+
+@keyframes petActShy {
+  0%, 100% { transform: translateX(-50%) translateY(0) scale(1) rotate(0deg); }
+  22% { transform: translateX(calc(-50% - 3px)) translateY(3px) scale(0.985) rotate(-2deg); }
+  46% { transform: translateX(calc(-50% + 2px)) translateY(5px) scale(0.975, 1.02) rotate(2deg); }
+  72% { transform: translateX(-50%) translateY(1px) scale(1.01, 0.99); }
+}
+
+@keyframes petActHappy {
+  0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
+  18% { transform: translateX(-50%) translateY(-12px) scale(1.04, 0.96); }
+  36% { transform: translateX(-50%) translateY(0) scale(0.98, 1.03); }
+  56% { transform: translateX(-50%) translateY(-9px) scale(1.03, 0.98) rotate(3deg); }
+  78% { transform: translateX(-50%) translateY(-2px) rotate(-2deg); }
+}
+
+@keyframes petActAngry {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+  10%, 30%, 50%, 70% { transform: translateX(calc(-50% - 4px)) translateY(-3px) rotate(-2deg) scale(1.015); }
+  20%, 40%, 60%, 80% { transform: translateX(calc(-50% + 4px)) translateY(-3px) rotate(2deg) scale(1.015); }
+}
+
+@keyframes petActMusic {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+  16% { transform: translateX(calc(-50% - 4px)) translateY(-5px) rotate(-5deg); }
+  32% { transform: translateX(calc(-50% + 5px)) translateY(-2px) rotate(5deg); }
+  50% { transform: translateX(calc(-50% - 3px)) translateY(-7px) rotate(-4deg); }
+  68% { transform: translateX(calc(-50% + 3px)) translateY(-2px) rotate(4deg); }
+  84% { transform: translateX(-50%) translateY(-4px) rotate(-2deg); }
+}
+
+@keyframes petActSparkle {
+  0%, 100% { transform: translateX(-50%) translateY(0) scale(1) rotate(0deg); }
+  20% { transform: translateX(-50%) translateY(-7px) scale(1.06) rotate(-3deg); }
+  42% { transform: translateX(-50%) translateY(-1px) scale(0.99, 1.03) rotate(2deg); }
+  64% { transform: translateX(-50%) translateY(-10px) scale(1.08, 0.96) rotate(4deg); }
+  82% { transform: translateX(-50%) translateY(-2px) scale(1.01); }
+}
+
+@keyframes petActExercise {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg) scale(1); }
+  14% { transform: translateX(calc(-50% - 6px)) translateY(-5px) rotate(-7deg); }
+  28% { transform: translateX(calc(-50% + 6px)) translateY(-8px) rotate(7deg); }
+  44% { transform: translateX(calc(-50% - 5px)) translateY(-4px) rotate(-5deg) scale(1.04, 0.97); }
+  62% { transform: translateX(calc(-50% + 5px)) translateY(-7px) rotate(5deg); }
+  80% { transform: translateX(-50%) translateY(1px) scale(0.98, 1.02); }
+}
+
+@keyframes petActReview {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+  16% { transform: translateX(calc(-50% - 5px)) translateY(-2px) rotate(-4deg); }
+  34% { transform: translateX(calc(-50% + 4px)) translateY(-3px) rotate(2deg); }
+  52% { transform: translateX(calc(-50% - 3px)) translateY(-5px) rotate(-3deg); }
+  74% { transform: translateX(-50%) translateY(-2px) rotate(1deg); }
+}
+
+@keyframes petActRelax {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg) scale(1); }
+  24% { transform: translateX(calc(-50% - 3px)) translateY(2px) rotate(-2deg) scale(0.99, 1.01); }
+  48% { transform: translateX(calc(-50% + 3px)) translateY(-3px) rotate(2deg) scale(1.015, 0.99); }
+  72% { transform: translateX(-50%) translateY(1px) rotate(-1deg); }
+}
+
+@keyframes petActSurprise {
+  0% { transform: translateX(-50%) translateY(4px) scale(0.94, 1.04); }
+  22% { transform: translateX(-50%) translateY(-16px) scale(1.14, 0.9) rotate(-3deg); }
+  42% { transform: translateX(-50%) translateY(2px) scale(0.97, 1.05) rotate(2deg); }
+  62% { transform: translateX(-50%) translateY(-8px) scale(1.05, 0.96); }
+  100% { transform: translateX(-50%) translateY(0) scale(1) rotate(0deg); }
+}
+
+@keyframes petActionArc {
+  0% { opacity: 0; transform: translateY(16px) translateX(0) scale(0.64) rotate(-12deg); }
+  18% { opacity: 1; transform: translateY(0) translateX(var(--dx, 0px)) scale(1); }
+  72% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-42px) translateX(var(--dx-end, 0px)) scale(0.84) rotate(16deg); }
+}
+
+@keyframes petActionOrbit {
+  0% { opacity: 0; transform: rotate(-18deg) translateY(14px) scale(0.65); }
+  20% { opacity: 1; transform: rotate(4deg) translateY(0) scale(1); }
+  70% { opacity: 1; transform: rotate(var(--tilt, 0deg)) translateY(-12px) scale(0.96); }
+  100% { opacity: 0; transform: rotate(18deg) translateY(-32px) scale(0.84); }
+}
+
+@keyframes petActionBeat {
+  0% { opacity: 0; transform: translateY(12px) scale(0.55) rotate(-8deg); }
+  16%, 42%, 68% { opacity: 1; transform: translateY(-6px) scale(1.1) rotate(6deg); }
+  28%, 54% { opacity: 0.82; transform: translateY(2px) scale(0.9) rotate(-4deg); }
+  100% { opacity: 0; transform: translateY(-40px) scale(0.82) rotate(16deg); }
 }
 
 @keyframes rigIdleBody {

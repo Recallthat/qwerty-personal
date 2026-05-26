@@ -126,6 +126,7 @@ let petFrameTimer = null;
 let petFrameResetTimer = null;
 let petFrameToken = 0;
 let petAnimeActionTimer = null;
+let petActionToken = 0;
 let petActionsRendered = false;
 let petShopRenderKey = "";
 let petCareRenderKey = "";
@@ -1732,13 +1733,7 @@ function getPetActionImage(motion) {
 }
 
 function getPetIdleImage() {
-  if (petPreview?.suit) return getActivePetSuit().image;
-  const pet = profile?.pet || {};
-  if (Date.now() - (pet.lastTypingAt || 0) < 1800) return getPetActionImage("focus");
-  if ((pet.hunger ?? 80) < 25) return getPetActionImage("hungry");
-  if ((pet.thirst ?? 80) < 25) return getPetActionImage("drink");
-  if ((pet.mood ?? 80) < 28) return getPetActionImage("sleepy");
-  return getPetActionImage("happy");
+  return getActivePetSuit().image;
 }
 
 function hasPetAnimeAction(motion) {
@@ -1756,20 +1751,10 @@ function stopPetAnimeAction(resetImage = true) {
 }
 
 function playPetAnimeAction(motion, duration = 1200) {
-  if (!hasPetAnimeAction(motion) || !elements.petCharacter) return false;
-  stopPetFrameSequence(false);
-  stopPetAnimeAction(false);
-  elements.petAvatar?.classList.add("anime-sprite-action");
-  elements.petCharacter.src = getPetActionImage(motion);
-  elements.petCharacter.alt = `${motion} 动作`;
-  petAnimeActionTimer = window.setTimeout(() => {
-    stopPetAnimeAction(true);
-  }, duration + 80);
-  return true;
+  return false;
 }
 
 function playPetFrameSequence(motion, duration = 1200) {
-  if (elements.petLive2d) return;
   const frameCount = petActionFrameCounts[motion];
   if (!frameCount || !elements.petCharacter) return;
   stopPetFrameSequence(false);
@@ -1923,7 +1908,21 @@ function renderPetMotionEffects(definition) {
   if (!elements.petMotionLayer) return;
   const effects = definition.effects?.length ? definition.effects : [definition.icon || ""];
   const slots = Array.from({ length: 8 }, (_, index) => effects[index % effects.length] || "");
-  elements.petMotionLayer.innerHTML = slots.map((effect, index) => `<i style="--i:${index}">${escapeHtml(effect)}</i>`).join("");
+  const positions = [
+    [18, 18, -18, -24, -5],
+    [42, 9, -6, -10, 4],
+    [66, 16, 10, 18, -4],
+    [82, 36, 20, 30, 7],
+    [14, 46, -22, -30, -7],
+    [35, 59, -10, -16, 3],
+    [62, 58, 12, 22, -3],
+    [78, 50, 22, 34, 6]
+  ];
+  elements.petMotionLayer.innerHTML = slots.map((effect, index) => {
+    const [x, y, dx, dxEnd, tilt] = positions[index % positions.length];
+    const safeEffect = escapeHtml(effect);
+    return `<i style="--i:${index};--x:${x}%;--y:${y}%;--dx:${dx}px;--dx-end:${dxEnd}px;--tilt:${tilt}deg" data-effect="${safeEffect}">${safeEffect}</i>`;
+  }).join("");
 }
 
 function unlockOrEquipPetItem(type, itemId) {
@@ -2048,27 +2047,36 @@ function updatePet(delta, message = "") {
 function triggerPetAction(actionId, message = "", delta = {}) {
   const definition = petActionDefs.find((item) => item.id === actionId) || { id: actionId, motion: actionId, icon: "", message, delta };
   const motion = definition.motion || definition.id;
+  const duration = definition.duration || 1200;
   if (motion !== "sleep") profile.pet.sleeping = false;
   updatePet({ ...(definition.delta || {}), ...delta }, message || definition.message || "");
   renderPetMotionEffects(definition);
   if (elements.petAvatar) {
+    const token = ++petActionToken;
     const actionClasses = petActionDefs.map((item) => `action-${item.motion || item.id}`).concat(["action-pat", "action-play", "action-focus", "action-change", "actioning"]);
     elements.petAvatar.classList.remove(...new Set(actionClasses));
     elements.petAvatar.dataset.motion = motion;
     elements.petAvatar.dataset.effect = definition.icon || "";
+    elements.petAvatar.style.setProperty("--pet-action-duration", `${duration}ms`);
+    stopPetFrameSequence(false);
+    stopPetAnimeAction(false);
+    if (elements.petCharacter) {
+      elements.petCharacter.src = getPetIdleImage();
+      elements.petCharacter.alt = getActivePetSuit().name;
+    }
     void elements.petAvatar.offsetWidth;
     elements.petAvatar.classList.add("actioning", `action-${motion}`);
-    if (!playPetAnimeAction(motion, definition.duration || 1200)) {
-      playPetFrameSequence(motion, definition.duration || 1200);
-    }
     window.setTimeout(() => {
+      if (token !== petActionToken) return;
       elements.petAvatar?.classList.remove("actioning", `action-${motion}`);
       if (elements.petAvatar) {
         elements.petAvatar.dataset.effect = "";
         elements.petAvatar.dataset.motion = "";
+        elements.petAvatar.style.removeProperty("--pet-action-duration");
       }
       if (elements.petMotionLayer) elements.petMotionLayer.innerHTML = "";
-    }, definition.duration || 1200);
+      applyPetLook();
+    }, duration);
   }
 }
 
