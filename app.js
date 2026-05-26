@@ -125,8 +125,10 @@ let petPreviewTimer = null;
 let petFrameTimer = null;
 let petFrameResetTimer = null;
 let petFrameToken = 0;
+let petAnimeActionTimer = null;
 let petActionsRendered = false;
 let petShopRenderKey = "";
+let petCareRenderKey = "";
 
 const petActionFrameCounts = {
   angry: 10,
@@ -197,6 +199,26 @@ const petActionHints = {
   surprise: "张手惊喜"
 };
 
+const petCareCategories = [
+  { id: "meal", label: "正餐" },
+  { id: "snack", label: "零食" },
+  { id: "drink", label: "饮料" },
+  { id: "tool", label: "道具" }
+];
+
+const petCareItems = [
+  { id: "bento", category: "meal", icon: "🍱", name: "晨间便当", price: 24, desc: "饱食 +32，心情 +6", effect: { hunger: 32, mood: 6 } },
+  { id: "curry", category: "meal", icon: "🍛", name: "热乎咖喱", price: 36, desc: "饱食 +46，体力 +8", effect: { hunger: 46, energy: 8 } },
+  { id: "cake", category: "snack", icon: "🍰", name: "草莓蛋糕", price: 18, desc: "心情 +24，饱食 +10", effect: { mood: 24, hunger: 10 } },
+  { id: "cookie", category: "snack", icon: "🍪", name: "键帽曲奇", price: 12, desc: "心情 +12，经验 +4", effect: { mood: 12, exp: 4 } },
+  { id: "tea", category: "drink", icon: "🍵", name: "薄荷热茶", price: 16, desc: "口渴 +32，心情 +5", effect: { thirst: 32, mood: 5 } },
+  { id: "soda", category: "drink", icon: "🥤", name: "蓝莓汽水", price: 20, desc: "口渴 +42，体力 +5", effect: { thirst: 42, energy: 5 } },
+  { id: "focus-card", category: "tool", icon: "🎫", name: "专注券", price: 45, desc: "体力 +28，经验 +12", effect: { energy: 28, exp: 12 } },
+  { id: "lucky-star", category: "tool", icon: "⭐", name: "幸运星星", price: 60, desc: "心情 +40，经验 +20", effect: { mood: 40, exp: 20 } }
+];
+
+let activeCareCategory = "meal";
+
 const defaultProfile = (name = "我的账号") => ({
   id: crypto.randomUUID(),
   name,
@@ -240,8 +262,18 @@ const defaultProfile = (name = "我的账号") => ({
     health: 72,
     mood: 68,
     energy: 60,
+    hunger: 78,
+    thirst: 76,
+    money: 0,
     exp: 0,
     level: 1,
+    todayChars: 0,
+    typedDate: TODAY,
+    typedSeconds: 0,
+    timerRunning: false,
+    lastTypingAt: 0,
+    combo: 0,
+    inventory: {},
     collapsed: false,
     x: null,
     y: null,
@@ -408,10 +440,23 @@ const elements = {
   petHealthBar: $("#petHealthBar"),
   petMoodBar: $("#petMoodBar"),
   petEnergyBar: $("#petEnergyBar"),
+  petHungerBar: $("#petHungerBar"),
+  petThirstBar: $("#petThirstBar"),
   petHealthText: $("#petHealthText"),
   petMoodText: $("#petMoodText"),
   petEnergyText: $("#petEnergyText"),
+  petHungerText: $("#petHungerText"),
+  petThirstText: $("#petThirstText"),
   petEnergyWallet: $("#petEnergyWallet"),
+  petTypingTimeText: $("#petTypingTimeText"),
+  petMoneyText: $("#petMoneyText"),
+  petTodayCharsText: $("#petTodayCharsText"),
+  petTimerButton: $("#petTimerButton"),
+  petShopOpenButton: $("#petShopOpenButton"),
+  petShopDialog: $("#petShopDialog"),
+  petShopMoneyText: $("#petShopMoneyText"),
+  petCareCategoryList: $("#petCareCategoryList"),
+  petCareGrid: $("#petCareGrid"),
   petSkinGrid: $("#petSkinGrid"),
   petShopTabs: $("#petShopTabs"),
   petShopHint: $("#petShopHint"),
@@ -445,6 +490,20 @@ function migrateProfile(input) {
   const base = defaultProfile(input?.name || "我的账号");
   const inputPet = input?.pet || {};
   const migratedPetName = !inputPet.name || /^mi(?:mo|no)$/i.test(inputPet.name) ? base.pet.name : inputPet.name;
+  const migratedPet = {
+    ...base.pet,
+    ...inputPet,
+    name: migratedPetName,
+    outfit: { ...base.pet.outfit, ...(inputPet.outfit || {}) },
+    outfitsOwned: { ...base.pet.outfitsOwned, ...(inputPet.outfitsOwned || {}) },
+    skinsOwned: inputPet.skinsOwned || base.pet.skinsOwned,
+    suitsOwned: inputPet.suitsOwned || base.pet.suitsOwned,
+    inventory: { ...(inputPet.inventory || {}) }
+  };
+  if (migratedPet.typedDate !== TODAY) {
+    migratedPet.typedDate = TODAY;
+    migratedPet.todayChars = 0;
+  }
   return {
     ...base,
     ...input,
@@ -455,15 +514,7 @@ function migrateProfile(input) {
     learnedWords: input?.learnedWords || {},
     favorites: input?.favorites || [],
     customWords: input?.customWords || [],
-    pet: {
-      ...base.pet,
-      ...inputPet,
-      name: migratedPetName,
-      outfit: { ...base.pet.outfit, ...(inputPet.outfit || {}) },
-      outfitsOwned: { ...base.pet.outfitsOwned, ...(inputPet.outfitsOwned || {}) },
-      skinsOwned: inputPet.skinsOwned || base.pet.skinsOwned,
-      suitsOwned: inputPet.suitsOwned || base.pet.suitsOwned
-    }
+    pet: migratedPet
   };
 }
 
@@ -1039,6 +1090,7 @@ function handleInput(event) {
     renderTyped();
     return;
   }
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
   if (key.length !== 1) return;
 
   event.preventDefault();
@@ -1061,6 +1113,7 @@ function handleInput(event) {
     if (!profile.settings.strict) typedValue += typed;
   }
 
+  rewardPetTypingChar(typed === expected);
   updateKeyboardHeat(expected?.toLowerCase());
   renderTyped();
   updateSessionMetrics();
@@ -1497,9 +1550,93 @@ function clampStat(value) {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
+function formatMoney(value) {
+  return Math.floor(Number(value || 0)).toLocaleString("zh-CN");
+}
+
+function formatDuration(seconds) {
+  const total = Math.max(0, Math.floor(seconds || 0));
+  const minutes = Math.floor(total / 60);
+  const secs = total % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
 function petSay(message) {
   if (!elements.petBubble) return;
   elements.petBubble.textContent = message;
+}
+
+function showPetCoinFloat(text = "金币 +1") {
+  if (!elements.petCard) return;
+  const pop = document.createElement("span");
+  pop.className = "pet-coin-float";
+  pop.textContent = text;
+  elements.petCard.appendChild(pop);
+  window.setTimeout(() => pop.remove(), 900);
+}
+
+function rewardPetTypingChar(correct = true) {
+  const pet = profile.pet;
+  if (pet.typedDate !== TODAY) {
+    pet.typedDate = TODAY;
+    pet.todayChars = 0;
+  }
+  pet.lastTypingAt = Date.now();
+  pet.combo = (pet.combo || 0) + 1;
+  pet.todayChars = (pet.todayChars || 0) + 1;
+  const comboBonus = Math.floor(pet.combo / 20);
+  const moneyGain = correct ? 1 + Math.min(4, comboBonus) : 1;
+  pet.money = Math.round((pet.money || 0) + moneyGain);
+  pet.exp = Math.round((pet.exp || 0) + (correct ? 1 : 0));
+  pet.mood = clampStat((pet.mood || 0) + (pet.combo % 20 === 0 ? 3 : 1));
+  pet.energy = clampStat((pet.energy || 0) + (pet.combo % 30 === 0 ? 1 : 0));
+  let animated = false;
+  while (pet.exp >= pet.level * 30) {
+    pet.exp -= pet.level * 30;
+    pet.level += 1;
+    pet.mood = clampStat(pet.mood + 8);
+    petSay(`升级到 Lv.${pet.level}，打字状态越来越稳。`);
+    triggerPetAction("celebrate");
+    animated = true;
+  }
+  showPetCoinFloat(pet.combo >= 20 ? `Combo ${pet.combo} +${moneyGain}` : `金币 +${moneyGain}`);
+  if (pet.combo % 20 === 0) {
+    triggerPetAction("cheer", `Combo ${pet.combo}，金币倍率提升。`, { mood: 2 });
+    animated = true;
+  } else if (correct && pet.combo % 12 === 1) {
+    triggerPetAction("focus", "认真打字中。", { mood: 0 });
+    animated = true;
+  }
+  if (!animated) {
+    renderPet();
+    saveState();
+  }
+}
+
+function togglePetTimer() {
+  profile.pet.timerRunning = !profile.pet.timerRunning;
+  profile.pet.lastTimerTick = Date.now();
+  petSay(profile.pet.timerRunning ? "计时开始，打字赚钱模式启动。" : "计时暂停，休息一下也很好。");
+  renderPet();
+  saveState();
+}
+
+function petTick() {
+  if (!profile?.pet) return;
+  const pet = profile.pet;
+  if (pet.timerRunning) {
+    pet.typedSeconds = Math.max(0, (pet.typedSeconds || 0) + 1);
+    if (pet.typedSeconds % 10 === 0) saveState();
+  }
+  if (pet.lastTypingAt && Date.now() - pet.lastTypingAt > 12000 && (pet.combo || 0) > 0) {
+    pet.combo = 0;
+    triggerPetAction("relax", "Combo 结束，喝口水再继续。", { mood: 0 });
+  }
+  if (Date.now() - (pet.lastTypingAt || 0) > 45000 && !pet.sleeping) {
+    pet.mood = clampStat((pet.mood || 0) - 1);
+    if (Math.random() < 0.12) triggerPetAction("sleepy", "等你回来打字。", { mood: 0 });
+  }
+  renderPet();
 }
 
 function renderPet() {
@@ -1511,21 +1648,37 @@ function renderPet() {
   elements.petHealthBar.style.width = `${pet.health}%`;
   elements.petMoodBar.style.width = `${pet.mood}%`;
   elements.petEnergyBar.style.width = `${Math.min(100, pet.energy)}%`;
+  elements.petHungerBar.style.width = `${Math.min(100, pet.hunger)}%`;
+  elements.petThirstBar.style.width = `${Math.min(100, pet.thirst)}%`;
   elements.petHealthText.textContent = pet.health;
   elements.petMoodText.textContent = pet.mood;
   elements.petEnergyText.textContent = pet.energy;
+  elements.petHungerText.textContent = pet.hunger;
+  elements.petThirstText.textContent = pet.thirst;
   elements.petEnergyWallet.textContent = `${pet.energy} 精力`;
+  if (elements.petMoneyText) elements.petMoneyText.textContent = formatMoney(pet.money);
+  if (elements.petShopMoneyText) elements.petShopMoneyText.textContent = formatMoney(pet.money);
+  if (elements.petTodayCharsText) elements.petTodayCharsText.textContent = formatMoney(pet.todayChars);
+  if (elements.petTypingTimeText) elements.petTypingTimeText.textContent = formatDuration(pet.typedSeconds);
+  if (elements.petTimerButton) elements.petTimerButton.textContent = pet.timerRunning ? "暂停" : "开始";
   elements.petLevelText.textContent = `Lv.${pet.level}`;
   elements.petExpText.textContent = `${pet.exp}/${maxExp}`;
+  renderCareShop();
   renderPetShop();
   renderPetActions();
   applyPetLook();
   const low = Math.min(pet.health, pet.mood) < 35;
   elements.petAvatar.classList.toggle("low", low);
   elements.petAvatar.classList.toggle("sleeping", !!pet.sleeping);
-  if (pet.sleeping) {
+  if (Date.now() - (pet.lastTypingAt || 0) < 1600) {
+    elements.petFace.textContent = "＾ᴗ＾";
+    elements.petMoodLabel.textContent = pet.combo >= 20 ? `Combo ${pet.combo}` : "认真打字中";
+  } else if (pet.sleeping) {
     elements.petFace.textContent = "－ᴗ－";
     elements.petMoodLabel.textContent = "小睡恢复中";
+  } else if (pet.hunger < 25 || pet.thirst < 25) {
+    elements.petFace.textContent = "•︵•";
+    elements.petMoodLabel.textContent = pet.hunger < pet.thirst ? "有点饿了" : "想喝点东西";
   } else if (low) {
     elements.petFace.textContent = "•︵•";
     elements.petMoodLabel.textContent = "需要背词恢复";
@@ -1574,6 +1727,47 @@ function stopPetFrameSequence(resetImage = true) {
   }
 }
 
+function getPetActionImage(motion) {
+  return `assets/pets/anime-actions/${motion}.webp`;
+}
+
+function getPetIdleImage() {
+  if (petPreview?.suit) return getActivePetSuit().image;
+  const pet = profile?.pet || {};
+  if (Date.now() - (pet.lastTypingAt || 0) < 1800) return getPetActionImage("focus");
+  if ((pet.hunger ?? 80) < 25) return getPetActionImage("hungry");
+  if ((pet.thirst ?? 80) < 25) return getPetActionImage("drink");
+  if ((pet.mood ?? 80) < 28) return getPetActionImage("sleepy");
+  return getPetActionImage("happy");
+}
+
+function hasPetAnimeAction(motion) {
+  return Object.prototype.hasOwnProperty.call(petActionFrameCounts, motion);
+}
+
+function stopPetAnimeAction(resetImage = true) {
+  if (petAnimeActionTimer) window.clearTimeout(petAnimeActionTimer);
+  petAnimeActionTimer = null;
+  elements.petAvatar?.classList.remove("anime-sprite-action");
+  if (resetImage && elements.petCharacter) {
+    elements.petCharacter.src = getPetIdleImage();
+    elements.petCharacter.alt = "青柚";
+  }
+}
+
+function playPetAnimeAction(motion, duration = 1200) {
+  if (!hasPetAnimeAction(motion) || !elements.petCharacter) return false;
+  stopPetFrameSequence(false);
+  stopPetAnimeAction(false);
+  elements.petAvatar?.classList.add("anime-sprite-action");
+  elements.petCharacter.src = getPetActionImage(motion);
+  elements.petCharacter.alt = `${motion} 动作`;
+  petAnimeActionTimer = window.setTimeout(() => {
+    stopPetAnimeAction(true);
+  }, duration + 80);
+  return true;
+}
+
 function playPetFrameSequence(motion, duration = 1200) {
   if (elements.petLive2d) return;
   const frameCount = petActionFrameCounts[motion];
@@ -1597,17 +1791,19 @@ function playPetFrameSequence(motion, duration = 1200) {
 }
 
 function applyPetLook() {
+  if (elements.petAvatar?.classList.contains("actioning")) return;
   const preview = petPreview || {};
   const outfit = { ...(profile.pet.outfit || {}), ...(preview.outfit || {}) };
   const suit = getActivePetSuit();
   const skinId = preview.skin || profile.pet.skin;
   const skin = petSkins.find((item) => item.id === skinId) || petSkins[0];
   stopPetFrameSequence(false);
+  stopPetAnimeAction(false);
   elements.petAvatar.className = `pet-avatar has-art ${skin.className}`;
   elements.petAvatar.dataset.suit = suit.id;
   elements.petAvatar.dataset.skinLabel = skin.label;
   if (elements.petCharacter) {
-    elements.petCharacter.src = suit.image;
+    elements.petCharacter.src = getPetIdleImage();
     elements.petCharacter.alt = suit.name;
   }
   [
@@ -1676,15 +1872,51 @@ function renderPetActions() {
   elements.petActionGrid.innerHTML = petActionDefs.map((action) => `
     <button type="button" data-pet-action="${action.id}" data-motion="${action.motion || action.id}" title="${escapeHtml(action.message || action.label)}">
       <span class="action-preview" data-motion="${action.motion || action.id}">
-        <i class="mini-head"></i>
-        <i class="mini-body"></i>
-        <i class="mini-arm left"></i>
-        <i class="mini-arm right"></i>
+        <img src="${getPetActionImage(action.motion || action.id)}" alt="" loading="lazy" />
       </span>
       <strong>${action.label}</strong>
       <em>${petActionHints[action.id] || "点击触发"}</em>
     </button>
   `).join("");
+}
+
+function renderCareShop() {
+  if (!elements.petCareCategoryList || !elements.petCareGrid) return;
+  const nextKey = activeCareCategory;
+  if (nextKey === petCareRenderKey) return;
+  petCareRenderKey = nextKey;
+  elements.petCareCategoryList.innerHTML = petCareCategories.map((category) => `
+    <button type="button" class="${category.id === activeCareCategory ? "active" : ""}" data-care-category="${category.id}">
+      ${category.label}
+    </button>
+  `).join("");
+  const items = petCareItems.filter((item) => item.category === activeCareCategory);
+  elements.petCareGrid.innerHTML = items.map((item) => `
+    <article class="pet-care-card">
+      <span class="pet-care-icon">${item.icon}</span>
+      <strong>${item.name}</strong>
+      <p>${item.desc}</p>
+      <button type="button" data-care-item="${item.id}">
+        ${item.price} 金币
+      </button>
+    </article>
+  `).join("");
+}
+
+function buyCareItem(itemId) {
+  const item = petCareItems.find((entry) => entry.id === itemId);
+  if (!item) return;
+  if ((profile.pet.money || 0) < item.price) {
+    petSay("金币不够，继续打字赚钱吧。");
+    showToast("金币不够，继续打字赚钱吧。");
+    triggerPetAction("hungry");
+    return;
+  }
+  profile.pet.money = Math.max(0, Math.round(profile.pet.money - item.price));
+  profile.pet.inventory ||= {};
+  profile.pet.inventory[item.id] = (profile.pet.inventory[item.id] || 0) + 1;
+  updatePet(item.effect, `${item.name} 已使用，青柚状态恢复啦。`);
+  triggerPetAction(item.category === "drink" ? "drink" : item.category === "tool" ? "sparkle" : "eat");
 }
 
 function renderPetMotionEffects(definition) {
@@ -1798,6 +2030,9 @@ function updatePet(delta, message = "") {
   pet.health = clampStat(pet.health + (delta.health || 0));
   pet.mood = clampStat(pet.mood + (delta.mood || 0));
   pet.energy = Math.max(0, Math.round(pet.energy + (delta.energy || 0)));
+  pet.hunger = clampStat((pet.hunger ?? 80) + (delta.hunger || 0));
+  pet.thirst = clampStat((pet.thirst ?? 80) + (delta.thirst || 0));
+  pet.money = Math.max(0, Math.round((pet.money || 0) + (delta.money || 0)));
   pet.exp = Math.max(0, pet.exp + (delta.exp || 0));
   while (pet.exp >= pet.level * 30) {
     pet.exp -= pet.level * 30;
@@ -1823,7 +2058,9 @@ function triggerPetAction(actionId, message = "", delta = {}) {
     elements.petAvatar.dataset.effect = definition.icon || "";
     void elements.petAvatar.offsetWidth;
     elements.petAvatar.classList.add("actioning", `action-${motion}`);
-    playPetFrameSequence(motion, definition.duration || 1200);
+    if (!playPetAnimeAction(motion, definition.duration || 1200)) {
+      playPetFrameSequence(motion, definition.duration || 1200);
+    }
     window.setTimeout(() => {
       elements.petAvatar?.classList.remove("actioning", `action-${motion}`);
       if (elements.petAvatar) {
@@ -1867,8 +2104,11 @@ function decayPet() {
   if (elapsedMinutes < 8) return;
   pet.health = clampStat(pet.health - Math.min(8, Math.floor(elapsedMinutes / 8)));
   pet.mood = clampStat(pet.mood - Math.min(10, Math.floor(elapsedMinutes / 6)));
+  pet.hunger = clampStat((pet.hunger ?? 80) - Math.min(12, Math.floor(elapsedMinutes / 7)));
+  pet.thirst = clampStat((pet.thirst ?? 80) - Math.min(14, Math.floor(elapsedMinutes / 6)));
+  if (pet.hunger < 25 || pet.thirst < 25) pet.mood = clampStat(pet.mood - 4);
   pet.lastCare = Date.now();
-  petSay("有点没精神，背一个词就能恢复。");
+  petSay(pet.hunger < 25 || pet.thirst < 25 ? "有点饿/渴，去商店买点补给吧。" : "有点没精神，背一个词就能恢复。");
   renderPet();
   saveState();
 }
@@ -2221,6 +2461,21 @@ function bindEvents() {
   elements.petPlayButton.addEventListener("click", () => triggerPetAction("cheer"));
   elements.petWaveButton?.addEventListener("click", () => triggerPetAction("wave"));
   elements.petFocusButton?.addEventListener("click", () => triggerPetAction("study"));
+  elements.petTimerButton?.addEventListener("click", togglePetTimer);
+  elements.petShopOpenButton?.addEventListener("click", () => {
+    renderCareShop();
+    elements.petShopDialog?.showModal();
+  });
+  elements.petCareCategoryList?.addEventListener("click", (event) => {
+    const category = event.target.closest("[data-care-category]")?.dataset.careCategory;
+    if (!category) return;
+    activeCareCategory = category;
+    renderCareShop();
+  });
+  elements.petCareGrid?.addEventListener("click", (event) => {
+    const itemId = event.target.closest("[data-care-item]")?.dataset.careItem;
+    if (itemId) buyCareItem(itemId);
+  });
   elements.petSleepButton.addEventListener("click", () => {
     profile.pet.sleeping = !profile.pet.sleeping;
     if (profile.pet.sleeping) {
@@ -2255,6 +2510,7 @@ function bindEvents() {
   });
   bindPetPanels();
   bindPetDrag();
+  setInterval(petTick, 1000);
   setInterval(decayPet, 60000);
   setInterval(randomPetIdleTalk, 45000);
 

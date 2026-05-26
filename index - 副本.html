@@ -490,7 +490,7 @@
             <span class="pet-part pet-prop-live sparkle"></span>
             <span class="pet-part pet-prop-live thought"></span>
           </span>
-          <img class="pet-character" id="petCharacter" src="assets/pets/anime-actions/happy.webp" alt="" onerror="this.onerror=null;this.src='assets/pets/aoi-study-crop.png';" />
+          <img class="pet-character" id="petCharacter" src="assets/pets/aoi-study.webp" alt="" onerror="this.onerror=null;this.src='assets/pets/aoi-study-crop.png';" />
           <span class="pet-shadow"></span>
           <span class="pet-motion-layer" id="petMotionLayer" aria-hidden="true"></span>
           <span class="pet-hair-back"></span>
@@ -517,14 +517,6 @@
           <label><span>状态</span><i><b id="petHealthBar"></b></i><em id="petHealthText">100</em></label>
           <label><span>心情</span><i><b id="petMoodBar"></b></i><em id="petMoodText">100</em></label>
           <label><span>精力</span><i><b id="petEnergyBar"></b></i><em id="petEnergyText">100</em></label>
-          <label><span>饱食</span><i><b id="petHungerBar"></b></i><em id="petHungerText">100</em></label>
-          <label><span>口渴</span><i><b id="petThirstBar"></b></i><em id="petThirstText">100</em></label>
-        </div>
-        <div class="pet-economy-panel">
-          <span><b id="petTypingTimeText">00:00</b><small>打字时长</small></span>
-          <span><b id="petMoneyText">0</b><small>金币</small></span>
-          <span><b id="petTodayCharsText">0</b><small>今日字数</small></span>
-          <button type="button" id="petTimerButton">开始</button>
         </div>
         <div class="pet-actions">
           <button type="button" id="petFeedButton">喂食</button>
@@ -532,7 +524,6 @@
           <button type="button" id="petWaveButton">招呼</button>
           <button type="button" id="petFocusButton">陪练</button>
           <button type="button" id="petSleepButton">小睡</button>
-          <button type="button" id="petShopOpenButton">商店</button>
         </div>
         <details class="pet-action-panel">
           <summary>20 套动作</summary>
@@ -540,7 +531,7 @@
         </details>
         <details class="pet-shop" id="petShop">
           <summary>
-            <span>外观收藏</span>
+            <span>装扮商店</span>
             <strong id="petEnergyWallet">60 精力</strong>
           </summary>
           <div class="pet-shop-tabs" id="petShopTabs"></div>
@@ -554,26 +545,6 @@
       </div>
       <button class="pet-dock" id="petDockButton" type="button">宠</button>
     </section>
-
-    <dialog id="petShopDialog">
-      <form method="dialog" class="pet-shop-modal">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">Pet Shop</p>
-            <h2>青柚补给站</h2>
-          </div>
-          <button class="ghost-button" value="cancel">关闭</button>
-        </div>
-        <div class="pet-shop-modal-balance">
-          <span>当前金币</span>
-          <strong id="petShopMoneyText">0</strong>
-        </div>
-        <div class="pet-shop-layout">
-          <div class="pet-care-categories" id="petCareCategoryList"></div>
-          <div class="pet-care-grid" id="petCareGrid"></div>
-        </div>
-      </form>
-    </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="official-dicts.js"></script>
