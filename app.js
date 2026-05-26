@@ -92,6 +92,18 @@ const mimoTtsTones = [
   { value: "唱歌", label: "唱歌" }
 ];
 
+const petSkins = [
+  { id: "default", name: "青绿原生", price: 0, label: "默认", className: "skin-default" },
+  { id: "rainbow", name: "炫彩流光", price: 45, label: "炫彩", className: "skin-rainbow" },
+  { id: "neon", name: "霓虹赛博", price: 60, label: "赛博", className: "skin-neon" },
+  { id: "cat_moe", name: "萌系猫娘", price: 85, label: "猫娘", className: "skin-cat-moe" },
+  { id: "cat_grace", name: "成熟猫娘", price: 120, label: "成熟", className: "skin-cat-grace" },
+  { id: "cat_queen", name: "御姐猫娘", price: 160, label: "御姐", className: "skin-cat-queen" },
+  { id: "sunny_boy", name: "阳光少年", price: 70, label: "少年", className: "skin-sunny-boy" },
+  { id: "cool_prince", name: "清冷帅哥", price: 130, label: "帅哥", className: "skin-cool-prince" },
+  { id: "star_idol", name: "星辉偶像", price: 220, label: "稀有", className: "skin-star-idol" }
+];
+
 const defaultProfile = (name = "我的账号") => ({
   id: crypto.randomUUID(),
   name,
@@ -140,7 +152,9 @@ const defaultProfile = (name = "我的账号") => ({
     x: null,
     y: null,
     sleeping: false,
-    lastCare: Date.now()
+    lastCare: Date.now(),
+    skin: "default",
+    skinsOwned: ["default"]
   }
 });
 
@@ -273,6 +287,8 @@ const elements = {
   petHealthText: $("#petHealthText"),
   petMoodText: $("#petMoodText"),
   petEnergyText: $("#petEnergyText"),
+  petEnergyWallet: $("#petEnergyWallet"),
+  petSkinGrid: $("#petSkinGrid"),
   petLevelText: $("#petLevelText"),
   petExpText: $("#petExpText"),
   toast: $("#toast")
@@ -1226,13 +1242,16 @@ function renderPet() {
   elements.petName.textContent = pet.name || "Mimo";
   elements.petHealthBar.style.width = `${pet.health}%`;
   elements.petMoodBar.style.width = `${pet.mood}%`;
-  elements.petEnergyBar.style.width = `${pet.energy}%`;
+  elements.petEnergyBar.style.width = `${Math.min(100, pet.energy)}%`;
   elements.petHealthText.textContent = pet.health;
   elements.petMoodText.textContent = pet.mood;
   elements.petEnergyText.textContent = pet.energy;
+  elements.petEnergyWallet.textContent = `${pet.energy} 精力`;
   elements.petLevelText.textContent = `Lv.${pet.level}`;
   elements.petExpText.textContent = `${pet.exp}/${maxExp}`;
-  const low = Math.min(pet.health, pet.mood, pet.energy) < 35;
+  renderPetSkins();
+  applyPetSkin();
+  const low = Math.min(pet.health, pet.mood) < 35;
   elements.petAvatar.classList.toggle("low", low);
   elements.petAvatar.classList.toggle("sleeping", !!pet.sleeping);
   if (pet.sleeping) {
@@ -1256,11 +1275,55 @@ function renderPet() {
   }
 }
 
+function applyPetSkin() {
+  const skin = petSkins.find((item) => item.id === profile.pet.skin) || petSkins[0];
+  elements.petAvatar.className = `pet-avatar ${skin.className}`;
+  elements.petAvatar.dataset.skinLabel = skin.label;
+}
+
+function renderPetSkins() {
+  if (!elements.petSkinGrid) return;
+  const owned = new Set(profile.pet.skinsOwned || ["default"]);
+  elements.petSkinGrid.innerHTML = petSkins.map((skin) => {
+    const isOwned = owned.has(skin.id);
+    const active = profile.pet.skin === skin.id;
+    const action = active ? "使用中" : isOwned ? "换上" : `${skin.price} 精力`;
+    return `
+      <button class="skin-card ${active ? "active" : ""}" type="button" data-skin-id="${skin.id}">
+        <span class="skin-preview ${skin.className}"></span>
+        <strong>${skin.name}</strong>
+        <em>${action}</em>
+      </button>
+    `;
+  }).join("");
+}
+
+function choosePetSkin(skinId) {
+  const skin = petSkins.find((item) => item.id === skinId);
+  if (!skin) return;
+  profile.pet.skinsOwned ||= ["default"];
+  const owned = profile.pet.skinsOwned.includes(skinId);
+  if (!owned) {
+    if (profile.pet.energy < skin.price) {
+      petSay(`还差 ${skin.price - profile.pet.energy} 精力，背几个词再来解锁。`);
+      return;
+    }
+    profile.pet.energy = clampStat(profile.pet.energy - skin.price);
+    profile.pet.skinsOwned.push(skinId);
+    petSay(`解锁了 ${skin.name}。`);
+  } else {
+    petSay(`换上 ${skin.name}。`);
+  }
+  profile.pet.skin = skinId;
+  renderPet();
+  saveState();
+}
+
 function updatePet(delta, message = "") {
   const pet = profile.pet;
   pet.health = clampStat(pet.health + (delta.health || 0));
   pet.mood = clampStat(pet.mood + (delta.mood || 0));
-  pet.energy = clampStat(pet.energy + (delta.energy || 0));
+  pet.energy = Math.max(0, Math.round(pet.energy + (delta.energy || 0)));
   pet.exp = Math.max(0, pet.exp + (delta.exp || 0));
   while (pet.exp >= pet.level * 30) {
     pet.exp -= pet.level * 30;
@@ -1275,7 +1338,7 @@ function updatePet(delta, message = "") {
 
 function rewardPetForWord(word) {
   profile.pet.sleeping = false;
-  updatePet({ health: 6, mood: 4, energy: 3, exp: 5 }, `记住 ${word} 了，我恢复了一点状态。`);
+  updatePet({ health: 6, mood: 4, energy: 1, exp: 5 }, `记住 ${word} 了，我恢复了一点状态，也获得了 1 精力。`);
   elements.petAvatar.classList.remove("celebrate");
   void elements.petAvatar.offsetWidth;
   elements.petAvatar.classList.add("celebrate");
@@ -1625,11 +1688,15 @@ function bindEvents() {
     renderPet();
   });
   elements.petAvatar.addEventListener("click", () => updatePet({ mood: 6, energy: -1 }, "摸摸有效，继续练一个词吧。"));
-  elements.petFeedButton.addEventListener("click", () => updatePet({ health: 10, mood: 2, energy: -2 }, "补充好了，不过真正恢复还是靠背词。"));
-  elements.petPlayButton.addEventListener("click", () => updatePet({ mood: 10, energy: -4 }, "互动完成，心情变好了。"));
+  elements.petFeedButton.addEventListener("click", () => updatePet({ health: 10, mood: 2 }, "补充好了，不过精力主要还是靠背词。"));
+  elements.petPlayButton.addEventListener("click", () => updatePet({ mood: 10 }, "互动完成，心情变好了。"));
   elements.petSleepButton.addEventListener("click", () => {
     profile.pet.sleeping = !profile.pet.sleeping;
-    updatePet(profile.pet.sleeping ? { energy: 12, mood: 2 } : { energy: 0 }, profile.pet.sleeping ? "我小睡一会儿，背词时会醒来。" : "醒了，继续陪你练。");
+    updatePet(profile.pet.sleeping ? { energy: 5, mood: 2 } : { energy: 0 }, profile.pet.sleeping ? "小睡恢复了 5 精力，背词时会醒来。" : "醒了，继续陪你练。");
+  });
+  elements.petSkinGrid.addEventListener("click", (event) => {
+    const skinId = event.target.closest("[data-skin-id]")?.dataset.skinId;
+    if (skinId) choosePetSkin(skinId);
   });
   bindPetDrag();
   setInterval(decayPet, 60000);
