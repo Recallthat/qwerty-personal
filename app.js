@@ -123,6 +123,29 @@ let activePetShopTab = "suit";
 let petPreview = null;
 let petPreviewTimer = null;
 
+const petActionDefs = [
+  { id: "wave", label: "打招呼", icon: "Hi", motion: "wave", message: "青柚向你挥手：今天也一起练吧。", delta: { mood: 3 } },
+  { id: "hungry", label: "饿了", icon: "饭", motion: "hungry", message: "青柚摸摸肚子：有点饿了，背几个词再给我换点好吃的吧。", delta: { mood: -1 } },
+  { id: "eat", label: "吃饭", icon: "吃", motion: "eat", message: "青柚吃饱了，状态恢复了一些。", delta: { health: 10, mood: 2 } },
+  { id: "drink", label: "喝水", icon: "水", motion: "drink", message: "喝口水，打字也要记得休息眼睛。", delta: { health: 3, mood: 2 } },
+  { id: "sleepy", label: "犯困", icon: "Zz", motion: "sleepy", message: "青柚揉揉眼睛：有点困，想小睡一下。", delta: { mood: -1 } },
+  { id: "stretch", label: "伸懒腰", icon: "伸", motion: "stretch", message: "青柚伸了个懒腰：肩膀放松，再继续。", delta: { health: 3, mood: 3 } },
+  { id: "study", label: "陪练", icon: "书", motion: "focus", message: "进入陪练模式：接下来 10 个词我都看着你。", delta: { mood: 4, health: 2 } },
+  { id: "think", label: "思考", icon: "?", motion: "think", message: "青柚正在思考：这个词的拼写结构可以拆开记。", delta: { mood: 1 } },
+  { id: "confused", label: "疑惑", icon: "错", motion: "confused", message: "青柚歪头：刚刚这个键位好像有点乱，我们慢一点。", delta: { mood: -1 } },
+  { id: "cheer", label: "鼓励", icon: "加油", motion: "cheer", message: "青柚给你打气：稳定正确率，比硬冲速度更重要。", delta: { mood: 5 } },
+  { id: "celebrate", label: "庆祝", icon: "✓", motion: "celebrate", message: "答对啦！青柚开心地转了一圈。", delta: { mood: 6, exp: 2 } },
+  { id: "shy", label: "害羞", icon: "羞", motion: "shy", message: "被你夸了，青柚有点不好意思。", delta: { mood: 4 } },
+  { id: "happy", label: "开心", icon: "乐", motion: "happy", message: "青柚今天心情很好，练词也会更顺。", delta: { mood: 6 } },
+  { id: "angry", label: "认真", icon: "!", motion: "angry", message: "青柚认真起来了：错词不能放过，复习区见。", delta: { mood: 1 } },
+  { id: "music", label: "哼歌", icon: "♪", motion: "music", message: "青柚小声哼歌，键盘节奏也跟着稳起来。", delta: { mood: 5 } },
+  { id: "sparkle", label: "闪亮", icon: "星", motion: "sparkle", message: "今日手感闪闪发光，继续保持。", delta: { mood: 4 } },
+  { id: "exercise", label: "活动", icon: "动", motion: "exercise", message: "青柚活动了一下：久坐了也要动动手腕。", delta: { health: 5, mood: 2 } },
+  { id: "review", label: "复习", icon: "复", motion: "review", message: "青柚翻开错词本：先复习最容易错的那几个。", delta: { health: 1, mood: 2 } },
+  { id: "relax", label: "放松", icon: "茶", motion: "relax", message: "喝口茶，放松一下，下一组再冲。", delta: { health: 4, mood: 4 } },
+  { id: "surprise", label: "惊喜", icon: "哇", motion: "surprise", message: "青柚眼睛一亮：这个词你记得比上次快多了。", delta: { mood: 5, exp: 1 } }
+];
+
 const defaultProfile = (name = "我的账号") => ({
   id: crypto.randomUUID(),
   name,
@@ -135,6 +158,7 @@ const defaultProfile = (name = "我的账号") => ({
   customWords: [],
   favorites: [],
   mistakes: {},
+  learnedWords: {},
   sessions: [],
   days: {},
   keyErrors: {},
@@ -201,6 +225,8 @@ let timerId = null;
 let typedValue = "";
 let inputErrorIndex = -1;
 let inputErrorTimer = null;
+let pendingSourceWords = null;
+let pendingStartOptions = null;
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -214,11 +240,16 @@ const elements = {
   goalRing: $("#goalRing"),
   viewTitle: $("#viewTitle"),
   startButton: $("#startButton"),
+  pauseButton: $("#pauseButton"),
+  stopButton: $("#stopButton"),
   dictSelect: $("#dictSelect"),
   chapterSelect: $("#chapterSelect"),
   modeSelect: $("#modeSelect"),
   loopInput: $("#loopInput"),
   wordStage: $("#wordStage"),
+  studyFlow: $("#studyFlow"),
+  phaseText: $("#phaseText"),
+  groupProgress: $("#groupProgress"),
   phoneticText: $("#phoneticText"),
   targetWord: $("#targetWord"),
   translationText: $("#translationText"),
@@ -266,6 +297,8 @@ const elements = {
   favoriteList: $("#favoriteList"),
   practiceMistakesButton: $("#practiceMistakesButton"),
   practiceFavsButton: $("#practiceFavsButton"),
+  practiceLearnedButton: $("#practiceLearnedButton"),
+  learnedList: $("#learnedList"),
   customWords: $("#customWords"),
   saveCustomButton: $("#saveCustomButton"),
   loadSampleButton: $("#loadSampleButton"),
@@ -318,6 +351,7 @@ const elements = {
   petSleepButton: $("#petSleepButton"),
   petWaveButton: $("#petWaveButton"),
   petFocusButton: $("#petFocusButton"),
+  petActionGrid: $("#petActionGrid"),
   petHealthBar: $("#petHealthBar"),
   petMoodBar: $("#petMoodBar"),
   petEnergyBar: $("#petEnergyBar"),
@@ -365,6 +399,7 @@ function migrateProfile(input) {
     ngramErrors: input?.ngramErrors || {},
     keyErrors: input?.keyErrors || {},
     mistakes: input?.mistakes || {},
+    learnedWords: input?.learnedWords || {},
     favorites: input?.favorites || [],
     customWords: input?.customWords || [],
     pet: {
@@ -660,15 +695,48 @@ function renderToggles() {
   elements.targetWord.classList.toggle("hidden", profile.settings.dictation);
 }
 
-async function buildQueue(sourceWords = null) {
+async function buildQueue(sourceWords = null, options = {}) {
   const words = sourceWords || await loadDictionary();
-  const size = Math.max(5, Number(elements.loopInput.value || CHAPTER_SIZE));
+  const size = options.review ? Math.min(10, Math.max(1, Number(elements.loopInput.value || 10))) : 10;
   const mode = elements.modeSelect.value;
-  if (sourceWords) return shuffle(words).slice(0, Math.min(size, words.length));
-  if (mode === "random") return shuffle(words).slice(0, Math.min(size, words.length));
-  if (mode === "adaptive") return adaptiveWords(words, size);
-  const chapter = Number(elements.chapterSelect.value || 0);
-  return words.slice(chapter * size, chapter * size + size);
+  let baseWords;
+  if (sourceWords) baseWords = shuffle(words).slice(0, Math.min(size, words.length));
+  else if (mode === "random") baseWords = shuffle(words).slice(0, Math.min(size, words.length));
+  else if (mode === "adaptive") baseWords = adaptiveWords(words, size);
+  else {
+    const chapter = Number(elements.chapterSelect.value || 0);
+    baseWords = words.slice(chapter * size, chapter * size + size);
+  }
+  if (options.review || options.forceRecall) return baseWords.map((item, index) => decorateStudyItem(item, "recall", 1, index));
+  return [
+    ...baseWords.map((item, index) => decorateStudyItem(item, "learn", 1, index)),
+    ...baseWords.map((item, index) => decorateStudyItem(item, "learn", 2, index)),
+    ...baseWords.map((item, index) => decorateStudyItem(item, "recall", 3, index))
+  ];
+}
+
+function decorateStudyItem(item, phase, pass, groupIndex) {
+  return { ...item, studyPhase: phase, studyPass: pass, groupIndex };
+}
+
+function isRecallItem(item) {
+  return item?.studyPhase === "recall";
+}
+
+function currentBaseGroupSize() {
+  if (!session?.baseWordCount) return 10;
+  return session.baseWordCount;
+}
+
+function recallCompletedCount() {
+  if (!session) return 0;
+  return session.completed;
+}
+
+function sessionElapsedSeconds() {
+  if (!session) return 0;
+  const paused = session.paused ? Date.now() - (session.pausedAt || Date.now()) : 0;
+  return Math.max(1, Math.round((Date.now() - session.startedAt - (session.pausedMs || 0) - paused) / 1000));
 }
 
 function adaptiveWords(words, size) {
@@ -691,11 +759,14 @@ function shuffle(items) {
   return [...items].sort(() => Math.random() - 0.5);
 }
 
-async function startPractice(sourceWords = null) {
+async function startPractice(sourceWords = null, options = {}) {
+  if (session) return;
   try {
+    pendingSourceWords = sourceWords;
+    pendingStartOptions = options;
     elements.startButton.disabled = true;
     elements.startButton.textContent = "读取词库...";
-    const words = await buildQueue(sourceWords);
+    const words = await buildQueue(sourceWords, options);
     if (!words.length) {
       showToast("这个词库还没有词。");
       return;
@@ -708,27 +779,66 @@ async function startPractice(sourceWords = null) {
       correctChars: 0,
       totalChars: 0,
       completed: 0,
+      drilled: 0,
       errors: 0,
       words: [],
+      baseWordCount: options.review || options.forceRecall ? words.length : Math.max(1, words.filter((item) => item.studyPhase === "recall").length),
+      review: !!options.review,
+      forceRecall: !!options.forceRecall,
+      paused: false,
+      pausedAt: 0,
+      pausedMs: 0,
       dictionary: dictionaryById(elements.dictSelect.value).name,
-      mode: elements.modeSelect.value
+      mode: options.review ? "review" : "learn-recall"
     };
     clearInterval(timerId);
     timerId = setInterval(updateSessionMetrics, 500);
     renderWord();
+    updateSessionMetrics();
+    updateTrainingButtons();
     elements.typingInput.focus();
-    showToast("练习开始。");
+    showToast(options.review ? "复习开始：看中文写英文。" : "训练开始：先熟悉两轮，再看中文默写。");
   } catch (error) {
     showToast(error.message || "词库读取失败。");
   } finally {
     elements.startButton.disabled = false;
-    elements.startButton.textContent = "开始练习";
+    updateTrainingButtons();
   }
 }
 
-function finishPractice() {
+function pausePractice() {
   if (!session) return;
-  const elapsed = Math.max(1, Math.round((Date.now() - session.startedAt) / 1000));
+  if (session.paused) {
+    session.pausedMs += Date.now() - (session.pausedAt || Date.now());
+    session.paused = false;
+    session.pausedAt = 0;
+    showToast("继续训练。");
+    elements.typingInput.focus();
+  } else {
+    session.paused = true;
+    session.pausedAt = Date.now();
+    showToast("已暂停。");
+  }
+  updateTrainingButtons();
+}
+
+function stopPractice() {
+  if (!session) return;
+  finishPractice("已停止，本组记录已保存。");
+}
+
+function updateTrainingButtons() {
+  const running = !!session;
+  elements.startButton.classList.toggle("hidden", running);
+  elements.pauseButton?.classList.toggle("hidden", !running);
+  elements.stopButton?.classList.toggle("hidden", !running);
+  if (elements.pauseButton) elements.pauseButton.textContent = session?.paused ? "继续" : "暂停";
+  if (!running) elements.startButton.textContent = "开始训练";
+}
+
+function finishPractice(message = "这一组完成，记录已保存。") {
+  if (!session) return;
+  const elapsed = sessionElapsedSeconds();
   const accuracy = Math.round((session.correctChars / Math.max(1, session.totalChars)) * 100);
   const wpm = Math.round((session.correctChars / 5 / elapsed) * 60);
   profile.sessions.unshift({
@@ -744,9 +854,12 @@ function finishPractice() {
   profile.days[TODAY] = (profile.days[TODAY] || 0) + session.completed;
   clearInterval(timerId);
   session = null;
+  pendingSourceWords = null;
+  pendingStartOptions = null;
   saveState();
   renderAll();
-  showToast("这一组完成，记录已保存。");
+  updateTrainingButtons();
+  showToast(message);
 }
 
 function renderWord() {
@@ -765,15 +878,22 @@ function renderWord() {
   typedValue = "";
   inputErrorIndex = -1;
   elements.typingInput.value = "";
+  const recall = isRecallItem(item);
+  elements.wordStage.classList.toggle("recall-mode", recall);
   elements.targetWord.textContent = item.word;
   elements.targetWord.setAttribute("aria-label", item.word);
-  elements.phoneticText.textContent = item.phonetic || " ";
+  elements.phoneticText.textContent = recall ? "看中文写英文" : item.phonetic || " ";
   elements.translationText.textContent = item.translation;
   renderStudyDetails(item);
   renderTyped();
   renderToggles();
+  elements.targetWord.classList.toggle("hidden", recall || profile.settings.dictation);
+  elements.phaseText.textContent = recall
+    ? "真正记忆：只看中文，把英文打出来"
+    : `熟悉拼写：第 ${item.studyPass || 1} 轮，跟着英文练一遍`;
+  elements.groupProgress.textContent = `${Math.min(recallCompletedCount() + (recall ? 1 : 0), currentBaseGroupSize())}/${currentBaseGroupSize()}`;
   updateFavoriteButton();
-  if (profile.settings.sound) speak(item.word);
+  if (profile.settings.sound && !recall) speak(item.word);
 }
 
 function renderStudyDetails(item) {
@@ -828,19 +948,25 @@ function escapeHtml(value) {
 
 function renderTyped() {
   const target = queue[currentIndex]?.word || "";
+  const recall = isRecallItem(queue[currentIndex]);
   elements.targetWord.innerHTML = [...target].map((char, index) => {
     const typed = typedValue[index];
     const classes = ["target-char"];
     if (typed === char) classes.push("filled");
     else if (index === inputErrorIndex) classes.push("wrong");
     else if (index === typedValue.length) classes.push("current");
-    return `<span class="${classes.join(" ")}">${escapeHtml(char)}</span>`;
+    const display = recall && typed !== char ? "•" : char;
+    return `<span class="${classes.join(" ")}">${escapeHtml(display)}</span>`;
   }).join("");
   elements.typedWord.textContent = `${typedValue.length}/${target.length}`;
 }
 
 function handleInput(event) {
   if (!session || !queue[currentIndex]) return;
+  if (session.paused) {
+    event.preventDefault();
+    return;
+  }
   const key = event.key;
   if (key === "Escape") {
     typedValue = "";
@@ -919,11 +1045,18 @@ function recordMistake(expected, target, item) {
 
 function completeWord() {
   const item = queue[currentIndex];
-  session.completed += 1;
-  session.words.push(item.word);
-  rewardPetForWord(item.word);
+  const recall = isRecallItem(item);
+  session.drilled += 1;
+  if (recall) {
+    session.completed += 1;
+    session.words.push(item.word);
+    addLearnedWord(item);
+    rewardPetForWord(item.word);
+  } else {
+    triggerPetAction("study", `熟悉了一遍 ${item.word}，后面会看中文默写。`, { mood: 1 });
+  }
   playSound("correct");
-  if (profile.mistakes[item.word]?.count > 0) {
+  if (recall && profile.mistakes[item.word]?.count > 0) {
     profile.mistakes[item.word].count = Math.max(0, profile.mistakes[item.word].count - 1);
     if (profile.mistakes[item.word].count === 0) delete profile.mistakes[item.word];
   }
@@ -934,15 +1067,32 @@ function completeWord() {
   renderWord();
 }
 
+function addLearnedWord(item) {
+  profile.learnedWords ||= {};
+  const current = profile.learnedWords[item.word] || {};
+  profile.learnedWords[item.word] = {
+    word: item.word,
+    translation: item.translation,
+    phonetic: item.phonetic,
+    translations: item.translations,
+    example: item.example,
+    exampleCn: item.exampleCn,
+    phrases: item.phrases,
+    learnedAt: current.learnedAt || Date.now(),
+    reviewedAt: Date.now(),
+    count: (current.count || 0) + 1
+  };
+}
+
 function updateSessionMetrics() {
   if (!session) return;
-  const elapsed = Math.max(1, Math.round((Date.now() - session.startedAt) / 1000));
+  const elapsed = sessionElapsedSeconds();
   const wpm = Math.round((session.correctChars / 5 / elapsed) * 60);
   const accuracy = Math.round((session.correctChars / Math.max(1, session.totalChars)) * 100);
   elements.timeMetric.textContent = formatTime(elapsed);
   elements.wpmMetric.textContent = wpm;
   elements.accuracyMetric.textContent = `${accuracy}%`;
-  elements.completeMetric.textContent = session.completed;
+  elements.completeMetric.textContent = `${session.completed}/${session.baseWordCount || 10}`;
 }
 
 async function speak(word) {
@@ -1215,6 +1365,17 @@ function calculateStreak() {
 
 function renderReview() {
   const mistakes = Object.values(profile.mistakes).sort((a, b) => b.count - a.count);
+  const learned = Object.values(profile.learnedWords || {}).sort((a, b) => (b.reviewedAt || b.learnedAt || 0) - (a.reviewedAt || a.learnedAt || 0));
+  if (elements.learnedList) {
+    elements.learnedList.innerHTML = learned.length
+      ? learned.slice(0, 80).map((item) => `
+        <div class="word-item">
+          <div><strong>${item.word}</strong><br><span>${item.translation} · 已记 ${item.count || 1} 次</span></div>
+          <button class="ghost-button" data-review-learned="${item.word}" type="button">复习</button>
+        </div>
+      `).join("")
+      : `<p class="empty">完成“看中文写英文”后，背过的词会进入这里。</p>`;
+  }
   elements.mistakeList.innerHTML = mistakes.length
     ? mistakes.map((item) => `
       <div class="word-item">
@@ -1241,6 +1402,7 @@ function renderDataPreview() {
     dailyGoal: profile.goal,
     sessions: profile.sessions.length,
     favorites: profile.favorites.length,
+    learnedWords: Object.keys(profile.learnedWords || {}).length,
     mistakes: Object.keys(profile.mistakes).length,
     customWords: profile.customWords.length
   };
@@ -1303,6 +1465,7 @@ function renderPet() {
   elements.petLevelText.textContent = `Lv.${pet.level}`;
   elements.petExpText.textContent = `${pet.exp}/${maxExp}`;
   renderPetShop();
+  renderPetActions();
   applyPetLook();
   const low = Math.min(pet.health, pet.mood) < 35;
   elements.petAvatar.classList.toggle("low", low);
@@ -1396,6 +1559,16 @@ function renderPetShop() {
       </button>
     `;
   }).join("");
+}
+
+function renderPetActions() {
+  if (!elements.petActionGrid) return;
+  elements.petActionGrid.innerHTML = petActionDefs.map((action) => `
+    <button type="button" data-pet-action="${action.id}">
+      <span>${action.icon}</span>
+      <strong>${action.label}</strong>
+    </button>
+  `).join("");
 }
 
 function unlockOrEquipPetItem(type, itemId) {
@@ -1514,15 +1687,21 @@ function updatePet(delta, message = "") {
   saveState();
 }
 
-function triggerPetAction(action, message = "", delta = {}) {
-  if (action !== "sleep") profile.pet.sleeping = false;
-  updatePet(delta, message);
+function triggerPetAction(actionId, message = "", delta = {}) {
+  const definition = petActionDefs.find((item) => item.id === actionId) || { id: actionId, motion: actionId, icon: "", message, delta };
+  const motion = definition.motion || definition.id;
+  if (motion !== "sleep") profile.pet.sleeping = false;
+  updatePet({ ...(definition.delta || {}), ...delta }, message || definition.message || "");
   if (elements.petAvatar) {
-    const actionClasses = ["action-pat", "action-play", "action-wave", "action-focus", "action-change"];
-    elements.petAvatar.classList.remove(...actionClasses);
+    const actionClasses = petActionDefs.map((item) => `action-${item.motion || item.id}`).concat(["action-pat", "action-play", "action-focus", "action-change", "actioning"]);
+    elements.petAvatar.classList.remove(...new Set(actionClasses));
+    elements.petAvatar.dataset.effect = definition.icon || "";
     void elements.petAvatar.offsetWidth;
-    elements.petAvatar.classList.add(`action-${action}`);
-    window.setTimeout(() => elements.petAvatar?.classList.remove(`action-${action}`), 900);
+    elements.petAvatar.classList.add("actioning", `action-${motion}`);
+    window.setTimeout(() => {
+      elements.petAvatar?.classList.remove("actioning", `action-${motion}`);
+      if (elements.petAvatar) elements.petAvatar.dataset.effect = "";
+    }, definition.duration || 1200);
   }
 }
 
@@ -1540,13 +1719,19 @@ function randomPetIdleTalk() {
 function rewardPetForWord(word) {
   profile.pet.sleeping = false;
   updatePet({ health: 6, mood: 4, energy: 1, exp: 5 }, `记住 ${word} 了，我恢复了一点状态，也获得了 1 精力。`);
+  elements.petAvatar.dataset.effect = "✓";
+  elements.petAvatar.classList.add("actioning");
   elements.petAvatar.classList.remove("celebrate");
   void elements.petAvatar.offsetWidth;
   elements.petAvatar.classList.add("celebrate");
+  window.setTimeout(() => {
+    elements.petAvatar?.classList.remove("actioning");
+    if (elements.petAvatar) elements.petAvatar.dataset.effect = "";
+  }, 900);
 }
 
 function nudgePetForMistake() {
-  updatePet({ mood: -1 }, "这个键有点卡，我们慢一点。");
+  triggerPetAction("confused");
 }
 
 function decayPet() {
@@ -1731,6 +1916,7 @@ function renderAccounts() {
 function renderAll() {
   populateSelects();
   renderProfile();
+  updateTrainingButtons();
   renderSettings();
   renderToggles();
   renderKeyboard();
@@ -1788,6 +1974,8 @@ function bindEvents() {
   elements.loopInput.addEventListener("change", renderChapters);
   elements.modeSelect.addEventListener("change", renderChapters);
   elements.startButton.addEventListener("click", () => startPractice());
+  elements.pauseButton?.addEventListener("click", pausePractice);
+  elements.stopButton?.addEventListener("click", stopPractice);
   elements.wordStage.addEventListener("click", () => elements.typingInput.focus());
   document.addEventListener("keydown", (event) => {
     if (event.target.matches("input, textarea, select") && event.target !== elements.typingInput) return;
@@ -1887,11 +2075,11 @@ function bindEvents() {
     saveState();
     renderPet();
   });
-  elements.petAvatar.addEventListener("click", () => triggerPetAction("pat", "摸摸有效，青柚精神了一点。", { mood: 6 }));
-  elements.petFeedButton.addEventListener("click", () => triggerPetAction("pat", "补充好了，不过精力主要还是靠背词。", { health: 10, mood: 2 }));
-  elements.petPlayButton.addEventListener("click", () => triggerPetAction("play", "跳跳互动完成，心情变好了。", { mood: 10 }));
-  elements.petWaveButton?.addEventListener("click", () => triggerPetAction("wave", "青柚向你打招呼：今天也一起练吧。", { mood: 3 }));
-  elements.petFocusButton?.addEventListener("click", () => triggerPetAction("focus", "进入陪练模式：接下来 10 个词我都看着你。", { mood: 4, health: 2 }));
+  elements.petAvatar.addEventListener("click", () => triggerPetAction("happy", "摸摸有效，青柚精神了一点。", { mood: 6 }));
+  elements.petFeedButton.addEventListener("click", () => triggerPetAction("eat"));
+  elements.petPlayButton.addEventListener("click", () => triggerPetAction("cheer"));
+  elements.petWaveButton?.addEventListener("click", () => triggerPetAction("wave"));
+  elements.petFocusButton?.addEventListener("click", () => triggerPetAction("study"));
   elements.petSleepButton.addEventListener("click", () => {
     profile.pet.sleeping = !profile.pet.sleeping;
     if (profile.pet.sleeping) {
@@ -1919,6 +2107,10 @@ function bindEvents() {
     activePetShopTab = tab;
     clearPetPreview();
     renderPetShop();
+  });
+  elements.petActionGrid?.addEventListener("click", (event) => {
+    const actionId = event.target.closest("[data-pet-action]")?.dataset.petAction;
+    if (actionId) triggerPetAction(actionId);
   });
   bindPetDrag();
   setInterval(decayPet, 60000);
@@ -2007,12 +2199,18 @@ function bindEvents() {
   elements.practiceMistakesButton.addEventListener("click", () => {
     const words = Object.values(profile.mistakes).map(normalizeWord);
     setView("practice");
-    startPractice(words);
+    startPractice(words, { review: true, forceRecall: true });
   });
 
   elements.practiceFavsButton.addEventListener("click", () => {
     setView("practice");
-    startPractice(profile.favorites);
+    startPractice(profile.favorites, { review: true, forceRecall: true });
+  });
+
+  elements.practiceLearnedButton?.addEventListener("click", () => {
+    const words = Object.values(profile.learnedWords || {}).map(normalizeWord);
+    setView("practice");
+    startPractice(words, { review: true, forceRecall: true });
   });
 
   elements.dictSearch.addEventListener("input", renderCatalog);
@@ -2021,6 +2219,7 @@ function bindEvents() {
   document.addEventListener("click", (event) => {
     const mistake = event.target.dataset.removeMistake;
     const fav = event.target.dataset.removeFav;
+    const reviewLearned = event.target.dataset.reviewLearned;
     const useDict = event.target.dataset.useDict;
     if (mistake) delete profile.mistakes[mistake];
     if (fav) profile.favorites = profile.favorites.filter((item) => item.word !== fav);
@@ -2031,6 +2230,13 @@ function bindEvents() {
       saveState();
       renderAll();
       showToast("已切换到这个官方词库。");
+    }
+    if (reviewLearned) {
+      const item = profile.learnedWords?.[reviewLearned];
+      if (item) {
+        setView("practice");
+        startPractice([item], { review: true, forceRecall: true });
+      }
     }
     if (mistake || fav) {
       saveState();
