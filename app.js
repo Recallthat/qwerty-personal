@@ -112,12 +112,66 @@ const petSuits = [
   { id: "idol", name: "星光偶像", price: 220, label: "偶像", image: "assets/pets/aoi-idol.webp", theme: "idol" }
 ];
 
+const petOutfitTabs = {
+  upper: [
+    { id: "upper_sailor", name: "海蓝外套", price: 0, label: "水手", className: "upper-sailor" },
+    { id: "upper_hoodie", name: "薄荷连帽衫", price: 45, label: "卫衣", className: "upper-hoodie" },
+    { id: "upper_cardigan", name: "樱粉开衫", price: 55, label: "开衫", className: "upper-cardigan" },
+    { id: "upper_blazer", name: "学院外套", price: 70, label: "西装", className: "upper-blazer" },
+    { id: "upper_hanfu", name: "青竹汉服", price: 95, label: "汉服", className: "upper-hanfu" },
+    { id: "upper_idol", name: "星辉演出服", price: 130, label: "舞台", className: "upper-idol" }
+  ],
+  lower: [
+    { id: "lower_skirt", name: "蓝色短裙", price: 0, label: "短裙", className: "lower-skirt" },
+    { id: "lower_shorts", name: "柠檬短裤", price: 35, label: "短裤", className: "lower-shorts" },
+    { id: "lower_trousers", name: "灰蓝长裤", price: 50, label: "长裤", className: "lower-trousers" },
+    { id: "lower_longskirt", name: "紫藤长裙", price: 68, label: "长裙", className: "lower-longskirt" },
+    { id: "lower_tech", name: "霓虹机能裙", price: 92, label: "机能", className: "lower-tech" }
+  ],
+  socks: [
+    { id: "socks_white", name: "白色短袜", price: 0, label: "白袜", className: "socks-white" },
+    { id: "socks_knee", name: "学院长袜", price: 28, label: "长袜", className: "socks-knee" },
+    { id: "socks_ribbon", name: "蝴蝶结袜", price: 36, label: "缎带", className: "socks-ribbon" },
+    { id: "socks_star", name: "星光短袜", price: 58, label: "星光", className: "socks-star" }
+  ],
+  shoes: [
+    { id: "shoes_canvas", name: "白色帆布鞋", price: 0, label: "帆布", className: "shoes-canvas" },
+    { id: "shoes_loafers", name: "茶会小皮鞋", price: 42, label: "皮鞋", className: "shoes-loafers" },
+    { id: "shoes_boots", name: "深色短靴", price: 64, label: "短靴", className: "shoes-boots" },
+    { id: "shoes_neon", name: "霓虹舞台鞋", price: 88, label: "霓虹", className: "shoes-neon" }
+  ]
+};
+
 const themeOrder = ["light", "mint", "sky", "sakura", "citrus", "lavender", "candy", "aurora", "latte", "idol", "ink", "green"];
 
 const petShopTabs = [
   { id: "suit", label: "套装", items: petSuits },
-  { id: "skin", label: "光效", items: petSkins }
+  { id: "skin", label: "光效", items: petSkins },
+  { id: "upper", label: "外套", items: petOutfitTabs.upper },
+  { id: "lower", label: "下装", items: petOutfitTabs.lower },
+  { id: "socks", label: "袜子", items: petOutfitTabs.socks },
+  { id: "shoes", label: "鞋子", items: petOutfitTabs.shoes }
 ];
+
+const petSkinEffectStyles = {
+  default: { color: "#40c78a", glow: "rgba(64, 199, 138, 0.34)", marks: ["OK", "✦"] },
+  rainbow: { color: "#ff7ac8", glow: "rgba(255, 122, 200, 0.42)", marks: ["彩", "✦"] },
+  neon: { color: "#22d3ee", glow: "rgba(34, 211, 238, 0.5)", marks: ["光", "⚡"] },
+  cat_moe: { color: "#ff8fc3", glow: "rgba(255, 143, 195, 0.42)", marks: ["喵", "♡"] },
+  cat_grace: { color: "#c89c72", glow: "rgba(200, 156, 114, 0.4)", marks: ["茶", "☁"] },
+  cat_queen: { color: "#b45cff", glow: "rgba(180, 92, 255, 0.48)", marks: ["紫", "✧"] },
+  sunny_boy: { color: "#ffb020", glow: "rgba(255, 176, 32, 0.42)", marks: ["晴", "✦"] },
+  cool_prince: { color: "#5ab7ff", glow: "rgba(90, 183, 255, 0.44)", marks: ["海", "◇"] },
+  star_idol: { color: "#ff4ecd", glow: "rgba(255, 78, 205, 0.52)", marks: ["星", "★"] }
+};
+
+const petSuitMotionProfiles = {
+  study: { particleYOffset: 0 },
+  mint: { particleYOffset: -2 },
+  school: { particleYOffset: 1 },
+  tea: { particleYOffset: 3 },
+  idol: { particleYOffset: -4 }
+};
 
 let activePetShopTab = "suit";
 let petPreview = null;
@@ -127,6 +181,8 @@ let petFrameResetTimer = null;
 let petFrameToken = 0;
 let petAnimeActionTimer = null;
 let petActionToken = 0;
+let petLookTransitionTimer = null;
+let pendingPetLookTransition = "";
 let petActionsRendered = false;
 let petShopRenderKey = "";
 let petCareRenderKey = "";
@@ -1714,6 +1770,74 @@ function getActivePetSuit() {
   return petSuits.find((item) => item.id === suitId) || petSuits[0];
 }
 
+function getActivePetSkin() {
+  const skinId = petPreview?.skin || profile.pet?.skin || "default";
+  return petSkins.find((item) => item.id === skinId) || petSkins[0];
+}
+
+function getActivePetOutfit() {
+  return { ...(profile.pet?.outfit || {}), ...(petPreview?.outfit || {}) };
+}
+
+function queuePetLookTransition(kind) {
+  pendingPetLookTransition = kind || "look";
+}
+
+function cssUrl(value) {
+  return `url("${String(value || "").replace(/["\\\n\r]/g, "\\$&")}")`;
+}
+
+function markPetLookChanging(kind = "look") {
+  if (!elements.petAvatar) return;
+  if (petLookTransitionTimer) window.clearTimeout(petLookTransitionTimer);
+  elements.petAvatar.classList.add("look-changing", `${kind}-shift`);
+  elements.petAvatar.dataset.transition = kind;
+  petLookTransitionTimer = window.setTimeout(() => {
+    elements.petAvatar?.classList.remove("look-changing", "suit-shift", "skin-shift", "outfit-shift", "look-shift");
+    if (elements.petAvatar) {
+      elements.petAvatar.dataset.transition = "";
+      elements.petAvatar.style.removeProperty("--pet-prev-image");
+    }
+  }, 560);
+}
+
+function setPetAvatarLookClass(skin, suit, preserveAction = true) {
+  if (!elements.petAvatar) return;
+  const keep = [];
+  elements.petAvatar.classList.forEach((className) => {
+    const isAction = preserveAction && (className === "actioning" || className.startsWith("action-"));
+    const isState = ["low", "sleeping", "look-changing", "suit-shift", "skin-shift", "outfit-shift", "look-shift"].includes(className);
+    if (isAction || isState) keep.push(className);
+  });
+  elements.petAvatar.className = ["pet-avatar", "has-art", skin.className, ...new Set(keep)].join(" ");
+  elements.petAvatar.dataset.suit = suit.id;
+  elements.petAvatar.dataset.skin = skin.id;
+  elements.petAvatar.dataset.skinLabel = skin.label;
+}
+
+function setPetCharacterImage(src, alt, transition = false) {
+  if (!elements.petCharacter) return;
+  const current = elements.petCharacter.getAttribute("src") || "";
+  if (transition && current && current !== src && elements.petAvatar) {
+    elements.petAvatar.style.setProperty("--pet-prev-image", cssUrl(current));
+    markPetLookChanging("suit");
+  }
+  if (current !== src) elements.petCharacter.src = src;
+  elements.petCharacter.alt = alt || "";
+}
+
+function updatePetActionPreviews(suit = getActivePetSuit(), skin = getActivePetSkin()) {
+  if (!elements.petActionGrid) return;
+  elements.petActionGrid.querySelectorAll(".action-preview").forEach((preview) => {
+    preview.dataset.suit = suit.id;
+    preview.dataset.skin = skin.id;
+    const image = preview.querySelector("img");
+    if (!image) return;
+    if (image.getAttribute("src") !== suit.image) image.src = suit.image;
+    image.alt = suit.name;
+  });
+}
+
 function stopPetFrameSequence(resetImage = true) {
   if (petFrameTimer) window.clearInterval(petFrameTimer);
   if (petFrameResetTimer) window.clearTimeout(petFrameResetTimer);
@@ -1775,22 +1899,17 @@ function playPetFrameSequence(motion, duration = 1200) {
   }, duration + 80);
 }
 
-function applyPetLook() {
-  if (elements.petAvatar?.classList.contains("actioning")) return;
-  const preview = petPreview || {};
-  const outfit = { ...(profile.pet.outfit || {}), ...(preview.outfit || {}) };
+function applyPetLook(options = {}) {
+  const transitionKind = options.transitionKind || pendingPetLookTransition;
+  pendingPetLookTransition = "";
+  const outfit = getActivePetOutfit();
   const suit = getActivePetSuit();
-  const skinId = preview.skin || profile.pet.skin;
-  const skin = petSkins.find((item) => item.id === skinId) || petSkins[0];
+  const skin = getActivePetSkin();
   stopPetFrameSequence(false);
   stopPetAnimeAction(false);
-  elements.petAvatar.className = `pet-avatar has-art ${skin.className}`;
-  elements.petAvatar.dataset.suit = suit.id;
-  elements.petAvatar.dataset.skinLabel = skin.label;
-  if (elements.petCharacter) {
-    elements.petCharacter.src = getPetIdleImage();
-    elements.petCharacter.alt = suit.name;
-  }
+  setPetAvatarLookClass(skin, suit, options.preserveAction !== false);
+  if (transitionKind && transitionKind !== "suit") markPetLookChanging(transitionKind);
+  setPetCharacterImage(getPetIdleImage(), suit.name, transitionKind === "suit");
   [
     ["upper", elements.petUpperLayer],
     ["lower", elements.petLowerLayer],
@@ -1801,6 +1920,7 @@ function applyPetLook() {
     const item = getPetOutfitItem(type, outfit[type]);
     node.className = `pet-outfit ${type} ${item?.className || ""}`;
   });
+  updatePetActionPreviews(suit, skin);
 }
 
 function renderPetShop() {
@@ -1854,10 +1974,12 @@ function renderPetActions() {
   if (!elements.petActionGrid) return;
   if (petActionsRendered) return;
   petActionsRendered = true;
+  const suit = getActivePetSuit();
+  const skin = getActivePetSkin();
   elements.petActionGrid.innerHTML = petActionDefs.map((action) => `
     <button type="button" data-pet-action="${action.id}" data-motion="${action.motion || action.id}" title="${escapeHtml(action.message || action.label)}">
-      <span class="action-preview" data-motion="${action.motion || action.id}">
-        <img src="${getPetActionImage(action.motion || action.id)}" alt="" loading="lazy" />
+      <span class="action-preview" data-motion="${action.motion || action.id}" data-suit="${suit.id}" data-skin="${skin.id}">
+        <img src="${suit.image}" alt="${escapeHtml(suit.name)}" loading="lazy" />
       </span>
       <strong>${action.label}</strong>
       <em>${petActionHints[action.id] || "点击触发"}</em>
@@ -1906,8 +2028,16 @@ function buyCareItem(itemId) {
 
 function renderPetMotionEffects(definition) {
   if (!elements.petMotionLayer) return;
+  const suit = getActivePetSuit();
+  const skin = getActivePetSkin();
+  const skinStyle = petSkinEffectStyles[skin.id] || petSkinEffectStyles.default;
+  const suitMotion = petSuitMotionProfiles[suit.id] || petSuitMotionProfiles.study;
   const effects = definition.effects?.length ? definition.effects : [definition.icon || ""];
-  const slots = Array.from({ length: 8 }, (_, index) => effects[index % effects.length] || "");
+  const skinMarks = skinStyle.marks || [];
+  const slots = Array.from({ length: 8 }, (_, index) => {
+    if (skinMarks.length && index % 3 === 2) return skinMarks[index % skinMarks.length];
+    return effects[index % effects.length] || skin.label || "";
+  });
   const positions = [
     [18, 18, -18, -24, -5],
     [42, 9, -6, -10, 4],
@@ -1918,10 +2048,15 @@ function renderPetMotionEffects(definition) {
     [62, 58, 12, 22, -3],
     [78, 50, 22, 34, 6]
   ];
+  elements.petMotionLayer.dataset.skin = skin.id;
+  elements.petMotionLayer.dataset.suit = suit.id;
+  elements.petMotionLayer.style.setProperty("--pet-effect-color", skinStyle.color);
+  elements.petMotionLayer.style.setProperty("--pet-effect-glow", skinStyle.glow);
   elements.petMotionLayer.innerHTML = slots.map((effect, index) => {
     const [x, y, dx, dxEnd, tilt] = positions[index % positions.length];
+    const linkedY = Math.max(4, Math.min(72, y + (suitMotion.particleYOffset || 0)));
     const safeEffect = escapeHtml(effect);
-    return `<i style="--i:${index};--x:${x}%;--y:${y}%;--dx:${dx}px;--dx-end:${dxEnd}px;--tilt:${tilt}deg" data-effect="${safeEffect}">${safeEffect}</i>`;
+    return `<i style="--i:${index};--x:${x}%;--y:${linkedY}%;--dx:${dx}px;--dx-end:${dxEnd}px;--tilt:${tilt}deg" data-effect="${safeEffect}">${safeEffect}</i>`;
   }).join("");
 }
 
@@ -1947,6 +2082,7 @@ function unlockOrEquipPetItem(type, itemId) {
     petSay(`换上 ${item.name}。`);
   }
   profile.pet.outfit[type] = itemId;
+  queuePetLookTransition("outfit");
   clearPetPreview();
   renderPet();
   saveState();
@@ -1964,6 +2100,7 @@ function previewPetItem(type, itemId) {
   if (type === "skin" || type === "suit") {
     document.body.className = `theme-${item?.theme || profile.theme || "light"}`;
   }
+  queuePetLookTransition(type === "suit" ? "suit" : type === "skin" ? "skin" : "outfit");
   petSay(`预览 ${item?.name || "装扮"}，5 秒后自动恢复。`);
   renderPet();
   petPreviewTimer = setTimeout(clearPetPreview, 5000);
@@ -1995,6 +2132,7 @@ function choosePetSkin(skinId) {
   profile.pet.skin = skinId;
   profile.theme = skin.theme || profile.theme;
   if (elements.themeSetting) elements.themeSetting.value = profile.theme;
+  queuePetLookTransition("skin");
   clearPetPreview();
   renderPet();
   saveState();
@@ -2019,6 +2157,7 @@ function choosePetSuit(suitId) {
   profile.pet.suit = suitId;
   profile.theme = suit.theme || profile.theme;
   if (elements.themeSetting) elements.themeSetting.value = profile.theme;
+  queuePetLookTransition("suit");
   clearPetPreview();
   triggerPetAction("change", `青柚换上了 ${suit.name}。`, { mood: 4 });
   saveState();
@@ -2060,10 +2199,7 @@ function triggerPetAction(actionId, message = "", delta = {}) {
     elements.petAvatar.style.setProperty("--pet-action-duration", `${duration}ms`);
     stopPetFrameSequence(false);
     stopPetAnimeAction(false);
-    if (elements.petCharacter) {
-      elements.petCharacter.src = getPetIdleImage();
-      elements.petCharacter.alt = getActivePetSuit().name;
-    }
+    setPetCharacterImage(getPetIdleImage(), getActivePetSuit().name, false);
     void elements.petAvatar.offsetWidth;
     elements.petAvatar.classList.add("actioning", `action-${motion}`);
     window.setTimeout(() => {
@@ -2075,7 +2211,7 @@ function triggerPetAction(actionId, message = "", delta = {}) {
         elements.petAvatar.style.removeProperty("--pet-action-duration");
       }
       if (elements.petMotionLayer) elements.petMotionLayer.innerHTML = "";
-      applyPetLook();
+      applyPetLook({ preserveAction: false });
     }, duration);
   }
 }

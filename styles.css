@@ -1634,6 +1634,19 @@ dialog::backdrop {
   z-index: 7;
   pointer-events: none;
   overflow: visible;
+  --pet-effect-color: var(--accent);
+  --pet-effect-glow: color-mix(in srgb, var(--accent) 34%, transparent);
+}
+
+.pet-motion-layer::before {
+  content: "";
+  position: absolute;
+  inset: 22px 26px 18px;
+  border: 1px solid var(--pet-effect-color);
+  border-radius: 46% 54% 44% 56%;
+  opacity: 0;
+  transform: scale(0.82);
+  box-shadow: 0 0 24px var(--pet-effect-glow);
 }
 
 .pet-motion-layer i {
@@ -1646,9 +1659,9 @@ dialog::backdrop {
   place-items: center;
   padding: 2px 5px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--panel) 80%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
-  color: var(--accent);
+  background: color-mix(in srgb, var(--pet-effect-color) 12%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--pet-effect-color) 46%, transparent);
+  color: var(--pet-effect-color);
   font-size: 12px;
   font-style: normal;
   font-weight: 900;
@@ -1659,6 +1672,10 @@ dialog::backdrop {
 .pet-avatar.actioning .pet-motion-layer i {
   animation: petParticle 1.35s ease both;
   animation-delay: calc(var(--i) * 0.075s);
+}
+
+.pet-avatar.actioning .pet-motion-layer::before {
+  animation: petLinkedAura var(--pet-action-duration, 1400ms) ease both;
 }
 
 .pet-avatar.actioning[data-motion="music"] .pet-motion-layer i,
@@ -1688,6 +1705,102 @@ dialog::backdrop {
 .pet-avatar .pet-face {
   display: none;
 }
+
+.pet-avatar.look-changing::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  z-index: 6;
+  display: block !important;
+  width: 194px;
+  height: 214px;
+  background-image: var(--pet-prev-image);
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: contain;
+  pointer-events: none;
+  transform: translateX(-50%);
+  filter: inherit;
+  animation: petLookGhostFade 0.56s ease both;
+}
+
+.pet-avatar.skin-shift,
+.pet-avatar.outfit-shift {
+  animation: petSkinAura 0.56s ease both;
+}
+
+.pet-avatar.has-art .pet-outfit {
+  display: block;
+  z-index: 6;
+  opacity: 0.92;
+  pointer-events: none;
+  transform-origin: 50% 86%;
+  filter: drop-shadow(0 6px 8px rgba(24, 39, 69, 0.12));
+}
+
+.pet-avatar.has-art .pet-outfit.upper {
+  left: 50%;
+  top: auto;
+  bottom: 42px;
+  width: 68px;
+  height: 30px;
+  transform: translateX(-50%);
+}
+
+.pet-avatar.has-art .pet-outfit.lower {
+  left: 50%;
+  top: auto;
+  bottom: 24px;
+  width: 56px;
+  height: 19px;
+  transform: translateX(-50%);
+}
+
+.pet-avatar.has-art .pet-outfit.socks {
+  left: 50%;
+  top: auto;
+  bottom: 15px;
+  width: 46px;
+  height: 11px;
+  transform: translateX(-50%);
+}
+
+.pet-avatar.has-art .pet-outfit.shoes {
+  left: 50%;
+  top: auto;
+  bottom: 7px;
+  width: 58px;
+  height: 9px;
+  transform: translateX(-50%);
+}
+
+.pet-avatar.actioning .pet-outfit {
+  animation-duration: var(--pet-action-duration, 1400ms);
+  animation-timing-function: cubic-bezier(0.22, 0.84, 0.28, 1);
+  animation-fill-mode: both;
+}
+
+.pet-avatar.action-wave .pet-outfit { animation-name: petActWave; }
+.pet-avatar.action-hungry .pet-outfit { animation-name: petActHungry; }
+.pet-avatar.action-eat .pet-outfit { animation-name: petActEat; }
+.pet-avatar.action-drink .pet-outfit { animation-name: petActDrink; }
+.pet-avatar.action-sleepy .pet-outfit { animation-name: petActSleepy; }
+.pet-avatar.action-stretch .pet-outfit { animation-name: petActStretch; }
+.pet-avatar.action-focus .pet-outfit { animation-name: petActFocus; }
+.pet-avatar.action-think .pet-outfit { animation-name: petActThink; }
+.pet-avatar.action-confused .pet-outfit { animation-name: petActConfused; }
+.pet-avatar.action-cheer .pet-outfit { animation-name: petActCheer; }
+.pet-avatar.action-celebrate .pet-outfit { animation-name: petActCelebrate; }
+.pet-avatar.action-shy .pet-outfit { animation-name: petActShy; }
+.pet-avatar.action-happy .pet-outfit { animation-name: petActHappy; }
+.pet-avatar.action-angry .pet-outfit { animation-name: petActAngry; }
+.pet-avatar.action-music .pet-outfit { animation-name: petActMusic; }
+.pet-avatar.action-sparkle .pet-outfit { animation-name: petActSparkle; }
+.pet-avatar.action-exercise .pet-outfit { animation-name: petActExercise; }
+.pet-avatar.action-review .pet-outfit { animation-name: petActReview; }
+.pet-avatar.action-relax .pet-outfit { animation-name: petActRelax; }
+.pet-avatar.action-surprise .pet-outfit { animation-name: petActSurprise; }
 
 .pet-avatar.skin-rainbow .pet-character {
   filter: hue-rotate(24deg) saturate(1.12) drop-shadow(0 16px 20px rgba(83, 72, 172, 0.2));
@@ -3063,6 +3176,38 @@ dialog::backdrop {
 .action-preview[data-motion="relax"] img { animation-name: petActRelax; }
 .action-preview[data-motion="surprise"] img { animation-name: petActSurprise; }
 
+.action-preview[data-skin="rainbow"] img {
+  filter: hue-rotate(24deg) saturate(1.12);
+}
+
+.action-preview[data-skin="neon"] img {
+  filter: hue-rotate(62deg) saturate(1.22) contrast(1.05) drop-shadow(0 0 8px rgba(34, 211, 238, 0.34));
+}
+
+.action-preview[data-skin="cat_moe"] img {
+  filter: hue-rotate(128deg) saturate(1.08) brightness(1.04);
+}
+
+.action-preview[data-skin="cat_grace"] img {
+  filter: sepia(0.18) saturate(0.92) brightness(0.98);
+}
+
+.action-preview[data-skin="cat_queen"] img {
+  filter: hue-rotate(58deg) saturate(1.18) brightness(0.96) drop-shadow(0 0 8px rgba(180, 92, 255, 0.26));
+}
+
+.action-preview[data-skin="sunny_boy"] img {
+  filter: hue-rotate(186deg) saturate(1.06) brightness(1.04);
+}
+
+.action-preview[data-skin="cool_prince"] img {
+  filter: saturate(0.92) brightness(1.04);
+}
+
+.action-preview[data-skin="star_idol"] img {
+  filter: hue-rotate(44deg) saturate(1.28) contrast(1.05) drop-shadow(0 0 8px rgba(255, 78, 205, 0.28));
+}
+
 .action-preview i {
   position: absolute;
   display: block;
@@ -3578,6 +3723,24 @@ dialog::backdrop {
   0% { transform: translateY(8px) scale(0.7); opacity: 0; }
   42% { transform: translateY(-4px) scale(1.08); opacity: 1; }
   100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes petLookGhostFade {
+  0% { opacity: 0.9; transform: translateX(-50%) translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-4px) scale(1.035); }
+}
+
+@keyframes petSkinAura {
+  0% { transform: translateY(0); filter: saturate(1); }
+  45% { transform: translateY(-2px); filter: saturate(1.18) brightness(1.06); }
+  100% { transform: translateY(0); filter: saturate(1); }
+}
+
+@keyframes petLinkedAura {
+  0% { opacity: 0; transform: scale(0.78) rotate(-6deg); }
+  22% { opacity: 0.72; transform: scale(1) rotate(2deg); }
+  78% { opacity: 0.42; }
+  100% { opacity: 0; transform: scale(1.14) rotate(8deg); }
 }
 
 @keyframes petCoinFloat {
