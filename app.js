@@ -104,58 +104,73 @@ const petSkins = [
   { id: "star_idol", name: "星辉偶像", price: 220, label: "稀有", className: "skin-star-idol", theme: "idol" }
 ];
 
+const petSuits = [
+  { id: "study", name: "红开衫学习装", price: 0, label: "默认", image: "assets/pets/aoi-study.webp", theme: "mint" },
+  { id: "mint", name: "薄荷卫衣", price: 80, label: "卫衣", image: "assets/pets/aoi-mint.webp", theme: "mint" },
+  { id: "school", name: "学院西装", price: 120, label: "学院", image: "assets/pets/aoi-school.webp", theme: "sky" },
+  { id: "tea", name: "午后茶会", price: 150, label: "茶会", image: "assets/pets/aoi-tea.webp", theme: "latte" },
+  { id: "idol", name: "星光偶像", price: 220, label: "偶像", image: "assets/pets/aoi-idol.webp", theme: "idol" }
+];
+
 const themeOrder = ["light", "mint", "sky", "sakura", "citrus", "lavender", "candy", "aurora", "latte", "idol", "ink", "green"];
 
 const petShopTabs = [
-  { id: "skin", label: "皮肤", items: petSkins },
-  {
-    id: "upper",
-    label: "上衣",
-    items: [
-      { id: "upper_sailor", name: "海风短衫", price: 0, label: "初始", className: "upper-sailor" },
-      { id: "upper_hoodie", name: "薄荷卫衣", price: 35, label: "清爽", className: "upper-hoodie" },
-      { id: "upper_cardigan", name: "樱粉开衫", price: 55, label: "柔和", className: "upper-cardigan" },
-      { id: "upper_blazer", name: "海盐外套", price: 75, label: "利落", className: "upper-blazer" },
-      { id: "upper_hanfu", name: "青竹小袄", price: 95, label: "雅致", className: "upper-hanfu" },
-      { id: "upper_idol", name: "星光夹克", price: 140, label: "舞台", className: "upper-idol" }
-    ]
-  },
-  {
-    id: "lower",
-    label: "下装",
-    items: [
-      { id: "lower_skirt", name: "浅蓝短裙", price: 0, label: "初始", className: "lower-skirt" },
-      { id: "lower_shorts", name: "柠檬短裤", price: 35, label: "轻快", className: "lower-shorts" },
-      { id: "lower_trousers", name: "灰蓝长裤", price: 60, label: "干净", className: "lower-trousers" },
-      { id: "lower_longskirt", name: "紫藤长裙", price: 85, label: "优雅", className: "lower-longskirt" },
-      { id: "lower_tech", name: "极光机能裤", price: 120, label: "极光", className: "lower-tech" }
-    ]
-  },
-  {
-    id: "shoes",
-    label: "鞋子",
-    items: [
-      { id: "shoes_canvas", name: "白色帆布鞋", price: 0, label: "初始", className: "shoes-canvas" },
-      { id: "shoes_loafers", name: "茶色乐福鞋", price: 30, label: "学院", className: "shoes-loafers" },
-      { id: "shoes_boots", name: "短靴", price: 55, label: "利落", className: "shoes-boots" },
-      { id: "shoes_neon", name: "星光运动鞋", price: 90, label: "闪耀", className: "shoes-neon" }
-    ]
-  },
-  {
-    id: "socks",
-    label: "裤袜",
-    items: [
-      { id: "socks_white", name: "白色短袜", price: 0, label: "初始", className: "socks-white" },
-      { id: "socks_knee", name: "海盐长袜", price: 25, label: "清新", className: "socks-knee" },
-      { id: "socks_ribbon", name: "樱粉缎带袜", price: 45, label: "可爱", className: "socks-ribbon" },
-      { id: "socks_star", name: "星点裤袜", price: 75, label: "星点", className: "socks-star" }
-    ]
-  }
+  { id: "suit", label: "套装", items: petSuits },
+  { id: "skin", label: "光效", items: petSkins }
 ];
 
-let activePetShopTab = "skin";
+let activePetShopTab = "suit";
 let petPreview = null;
 let petPreviewTimer = null;
+let petFrameTimer = null;
+let petFrameResetTimer = null;
+let petFrameToken = 0;
+
+const petActionFrameCounts = {
+  angry: 10,
+  celebrate: 14,
+  cheer: 12,
+  confused: 12,
+  drink: 12,
+  eat: 14,
+  exercise: 12,
+  focus: 12,
+  happy: 12,
+  hungry: 14,
+  music: 12,
+  relax: 12,
+  review: 12,
+  shy: 12,
+  sleepy: 12,
+  sparkle: 12,
+  stretch: 12,
+  surprise: 12,
+  think: 12,
+  wave: 14
+};
+
+const petActionDefs = [
+  { id: "wave", label: "打招呼", icon: "Hi", motion: "wave", effects: ["Hi", "✦", "✦", "♡"], duration: 1500, message: "青柚向你挥手：今天也一起练吧。", delta: { mood: 3 } },
+  { id: "hungry", label: "饿了", icon: "饭", motion: "hungry", effects: ["饭", "…", "🍙", "?"], duration: 1700, message: "青柚摸摸肚子：有点饿了，背几个词再给我换点好吃的吧。", delta: { mood: -1 } },
+  { id: "eat", label: "吃饭", icon: "吃", motion: "eat", effects: ["🍙", "吃", "♪", "♡"], duration: 1500, message: "青柚吃饱了，状态恢复了一些。", delta: { health: 10, mood: 2 } },
+  { id: "drink", label: "喝水", icon: "水", motion: "drink", effects: ["水", "💧", "💧", "OK"], duration: 1500, message: "喝口水，打字也要记得休息眼睛。", delta: { health: 3, mood: 2 } },
+  { id: "sleepy", label: "犯困", icon: "Zz", motion: "sleepy", effects: ["Zz", "Z", "…", "☁"], duration: 1800, message: "青柚揉揉眼睛：有点困，想小睡一下。", delta: { mood: -1 } },
+  { id: "stretch", label: "伸懒腰", icon: "伸", motion: "stretch", effects: ["伸", "呼", "✦", "OK"], duration: 1600, message: "青柚伸了个懒腰：肩膀放松，再继续。", delta: { health: 3, mood: 3 } },
+  { id: "study", label: "陪练", icon: "书", motion: "focus", effects: ["书", "10", "词", "✓"], duration: 1700, message: "进入陪练模式：接下来 10 个词我都看着你。", delta: { mood: 4, health: 2 } },
+  { id: "think", label: "思考", icon: "?", motion: "think", effects: ["?", "abc", "拆", "记"], duration: 1800, message: "青柚正在思考：这个词的拼写结构可以拆开记。", delta: { mood: 1 } },
+  { id: "confused", label: "疑惑", icon: "错", motion: "confused", effects: ["?", "错", "!", "…"], duration: 1500, message: "青柚歪头：刚刚这个键位好像有点乱，我们慢一点。", delta: { mood: -1 } },
+  { id: "cheer", label: "鼓励", icon: "加油", motion: "cheer", effects: ["加油", "↑", "✦", "✓"], duration: 1500, message: "青柚给你打气：稳定正确率，比硬冲速度更重要。", delta: { mood: 5 } },
+  { id: "celebrate", label: "庆祝", icon: "✓", motion: "celebrate", effects: ["✓", "★", "★", "棒"], duration: 1700, message: "答对啦！青柚开心地转了一圈。", delta: { mood: 6, exp: 2 } },
+  { id: "shy", label: "害羞", icon: "羞", motion: "shy", effects: ["羞", "♡", "///", "…"], duration: 1500, message: "被你夸了，青柚有点不好意思。", delta: { mood: 4 } },
+  { id: "happy", label: "开心", icon: "乐", motion: "happy", effects: ["乐", "♡", "✦", "♪"], duration: 1400, message: "青柚今天心情很好，练词也会更顺。", delta: { mood: 6 } },
+  { id: "angry", label: "认真", icon: "!", motion: "angry", effects: ["!", "错词", "复习", "!"], duration: 1400, message: "青柚认真起来了：错词不能放过，复习区见。", delta: { mood: 1 } },
+  { id: "music", label: "哼歌", icon: "♪", motion: "music", effects: ["♪", "♫", "♪", "♬"], duration: 1700, message: "青柚小声哼歌，键盘节奏也跟着稳起来。", delta: { mood: 5 } },
+  { id: "sparkle", label: "闪亮", icon: "星", motion: "sparkle", effects: ["星", "✦", "✧", "★"], duration: 1700, message: "今日手感闪闪发光，继续保持。", delta: { mood: 4 } },
+  { id: "exercise", label: "活动", icon: "动", motion: "exercise", effects: ["动", "1", "2", "腕"], duration: 1700, message: "青柚活动了一下：久坐了也要动动手腕。", delta: { health: 5, mood: 2 } },
+  { id: "review", label: "复习", icon: "复", motion: "review", effects: ["复", "错词", "本", "✓"], duration: 1700, message: "青柚翻开错词本：先复习最容易错的那几个。", delta: { health: 1, mood: 2 } },
+  { id: "relax", label: "放松", icon: "茶", motion: "relax", effects: ["茶", "☁", "呼", "♪"], duration: 1800, message: "喝口茶，放松一下，下一组再冲。", delta: { health: 4, mood: 4 } },
+  { id: "surprise", label: "惊喜", icon: "哇", motion: "surprise", effects: ["哇", "!", "★", "快"], duration: 1500, message: "青柚眼睛一亮：这个词你记得比上次快多了。", delta: { mood: 5, exp: 1 } }
+];
 
 const defaultProfile = (name = "我的账号") => ({
   id: crypto.randomUUID(),
@@ -169,6 +184,7 @@ const defaultProfile = (name = "我的账号") => ({
   customWords: [],
   favorites: [],
   mistakes: {},
+  learnedWords: {},
   sessions: [],
   days: {},
   keyErrors: {},
@@ -207,6 +223,8 @@ const defaultProfile = (name = "我的账号") => ({
     sleeping: false,
     lastCare: Date.now(),
     lastNapAt: 0,
+    suit: "study",
+    suitsOwned: ["study"],
     skin: "default",
     skinsOwned: ["default"],
     outfit: {
@@ -233,6 +251,8 @@ let timerId = null;
 let typedValue = "";
 let inputErrorIndex = -1;
 let inputErrorTimer = null;
+let pendingSourceWords = null;
+let pendingStartOptions = null;
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -246,11 +266,16 @@ const elements = {
   goalRing: $("#goalRing"),
   viewTitle: $("#viewTitle"),
   startButton: $("#startButton"),
+  pauseButton: $("#pauseButton"),
+  stopButton: $("#stopButton"),
   dictSelect: $("#dictSelect"),
   chapterSelect: $("#chapterSelect"),
   modeSelect: $("#modeSelect"),
   loopInput: $("#loopInput"),
   wordStage: $("#wordStage"),
+  studyFlow: $("#studyFlow"),
+  phaseText: $("#phaseText"),
+  groupProgress: $("#groupProgress"),
   phoneticText: $("#phoneticText"),
   targetWord: $("#targetWord"),
   translationText: $("#translationText"),
@@ -298,6 +323,8 @@ const elements = {
   favoriteList: $("#favoriteList"),
   practiceMistakesButton: $("#practiceMistakesButton"),
   practiceFavsButton: $("#practiceFavsButton"),
+  practiceLearnedButton: $("#practiceLearnedButton"),
+  learnedList: $("#learnedList"),
   customWords: $("#customWords"),
   saveCustomButton: $("#saveCustomButton"),
   loadSampleButton: $("#loadSampleButton"),
@@ -342,11 +369,16 @@ const elements = {
   petMoodLabel: $("#petMoodLabel"),
   petFace: $("#petFace"),
   petAvatar: $("#petAvatar"),
+  petCharacter: $("#petCharacter"),
+  petMotionLayer: $("#petMotionLayer"),
   petMinimizeButton: $("#petMinimizeButton"),
   petDockButton: $("#petDockButton"),
   petFeedButton: $("#petFeedButton"),
   petPlayButton: $("#petPlayButton"),
   petSleepButton: $("#petSleepButton"),
+  petWaveButton: $("#petWaveButton"),
+  petFocusButton: $("#petFocusButton"),
+  petActionGrid: $("#petActionGrid"),
   petHealthBar: $("#petHealthBar"),
   petMoodBar: $("#petMoodBar"),
   petEnergyBar: $("#petEnergyBar"),
@@ -394,6 +426,7 @@ function migrateProfile(input) {
     ngramErrors: input?.ngramErrors || {},
     keyErrors: input?.keyErrors || {},
     mistakes: input?.mistakes || {},
+    learnedWords: input?.learnedWords || {},
     favorites: input?.favorites || [],
     customWords: input?.customWords || [],
     pet: {
@@ -402,7 +435,8 @@ function migrateProfile(input) {
       name: migratedPetName,
       outfit: { ...base.pet.outfit, ...(inputPet.outfit || {}) },
       outfitsOwned: { ...base.pet.outfitsOwned, ...(inputPet.outfitsOwned || {}) },
-      skinsOwned: inputPet.skinsOwned || base.pet.skinsOwned
+      skinsOwned: inputPet.skinsOwned || base.pet.skinsOwned,
+      suitsOwned: inputPet.suitsOwned || base.pet.suitsOwned
     }
   };
 }
@@ -688,15 +722,48 @@ function renderToggles() {
   elements.targetWord.classList.toggle("hidden", profile.settings.dictation);
 }
 
-async function buildQueue(sourceWords = null) {
+async function buildQueue(sourceWords = null, options = {}) {
   const words = sourceWords || await loadDictionary();
-  const size = Math.max(5, Number(elements.loopInput.value || CHAPTER_SIZE));
+  const size = options.review ? Math.min(10, Math.max(1, Number(elements.loopInput.value || 10))) : 10;
   const mode = elements.modeSelect.value;
-  if (sourceWords) return shuffle(words).slice(0, Math.min(size, words.length));
-  if (mode === "random") return shuffle(words).slice(0, Math.min(size, words.length));
-  if (mode === "adaptive") return adaptiveWords(words, size);
-  const chapter = Number(elements.chapterSelect.value || 0);
-  return words.slice(chapter * size, chapter * size + size);
+  let baseWords;
+  if (sourceWords) baseWords = shuffle(words).slice(0, Math.min(size, words.length));
+  else if (mode === "random") baseWords = shuffle(words).slice(0, Math.min(size, words.length));
+  else if (mode === "adaptive") baseWords = adaptiveWords(words, size);
+  else {
+    const chapter = Number(elements.chapterSelect.value || 0);
+    baseWords = words.slice(chapter * size, chapter * size + size);
+  }
+  if (options.review || options.forceRecall) return baseWords.map((item, index) => decorateStudyItem(item, "recall", 1, index));
+  return [
+    ...baseWords.map((item, index) => decorateStudyItem(item, "learn", 1, index)),
+    ...baseWords.map((item, index) => decorateStudyItem(item, "learn", 2, index)),
+    ...baseWords.map((item, index) => decorateStudyItem(item, "recall", 3, index))
+  ];
+}
+
+function decorateStudyItem(item, phase, pass, groupIndex) {
+  return { ...item, studyPhase: phase, studyPass: pass, groupIndex };
+}
+
+function isRecallItem(item) {
+  return item?.studyPhase === "recall";
+}
+
+function currentBaseGroupSize() {
+  if (!session?.baseWordCount) return 10;
+  return session.baseWordCount;
+}
+
+function recallCompletedCount() {
+  if (!session) return 0;
+  return session.completed;
+}
+
+function sessionElapsedSeconds() {
+  if (!session) return 0;
+  const paused = session.paused ? Date.now() - (session.pausedAt || Date.now()) : 0;
+  return Math.max(1, Math.round((Date.now() - session.startedAt - (session.pausedMs || 0) - paused) / 1000));
 }
 
 function adaptiveWords(words, size) {
@@ -719,11 +786,14 @@ function shuffle(items) {
   return [...items].sort(() => Math.random() - 0.5);
 }
 
-async function startPractice(sourceWords = null) {
+async function startPractice(sourceWords = null, options = {}) {
+  if (session) return;
   try {
+    pendingSourceWords = sourceWords;
+    pendingStartOptions = options;
     elements.startButton.disabled = true;
     elements.startButton.textContent = "读取词库...";
-    const words = await buildQueue(sourceWords);
+    const words = await buildQueue(sourceWords, options);
     if (!words.length) {
       showToast("这个词库还没有词。");
       return;
@@ -736,27 +806,66 @@ async function startPractice(sourceWords = null) {
       correctChars: 0,
       totalChars: 0,
       completed: 0,
+      drilled: 0,
       errors: 0,
       words: [],
+      baseWordCount: options.review || options.forceRecall ? words.length : Math.max(1, words.filter((item) => item.studyPhase === "recall").length),
+      review: !!options.review,
+      forceRecall: !!options.forceRecall,
+      paused: false,
+      pausedAt: 0,
+      pausedMs: 0,
       dictionary: dictionaryById(elements.dictSelect.value).name,
-      mode: elements.modeSelect.value
+      mode: options.review ? "review" : "learn-recall"
     };
     clearInterval(timerId);
     timerId = setInterval(updateSessionMetrics, 500);
     renderWord();
+    updateSessionMetrics();
+    updateTrainingButtons();
     elements.typingInput.focus();
-    showToast("练习开始。");
+    showToast(options.review ? "复习开始：看中文写英文。" : "训练开始：先熟悉两轮，再看中文默写。");
   } catch (error) {
     showToast(error.message || "词库读取失败。");
   } finally {
     elements.startButton.disabled = false;
-    elements.startButton.textContent = "开始练习";
+    updateTrainingButtons();
   }
 }
 
-function finishPractice() {
+function pausePractice() {
   if (!session) return;
-  const elapsed = Math.max(1, Math.round((Date.now() - session.startedAt) / 1000));
+  if (session.paused) {
+    session.pausedMs += Date.now() - (session.pausedAt || Date.now());
+    session.paused = false;
+    session.pausedAt = 0;
+    showToast("继续训练。");
+    elements.typingInput.focus();
+  } else {
+    session.paused = true;
+    session.pausedAt = Date.now();
+    showToast("已暂停。");
+  }
+  updateTrainingButtons();
+}
+
+function stopPractice() {
+  if (!session) return;
+  finishPractice("已停止，本组记录已保存。");
+}
+
+function updateTrainingButtons() {
+  const running = !!session;
+  elements.startButton.classList.toggle("hidden", running);
+  elements.pauseButton?.classList.toggle("hidden", !running);
+  elements.stopButton?.classList.toggle("hidden", !running);
+  if (elements.pauseButton) elements.pauseButton.textContent = session?.paused ? "继续" : "暂停";
+  if (!running) elements.startButton.textContent = "开始训练";
+}
+
+function finishPractice(message = "这一组完成，记录已保存。") {
+  if (!session) return;
+  const elapsed = sessionElapsedSeconds();
   const accuracy = Math.round((session.correctChars / Math.max(1, session.totalChars)) * 100);
   const wpm = Math.round((session.correctChars / 5 / elapsed) * 60);
   profile.sessions.unshift({
@@ -772,9 +881,12 @@ function finishPractice() {
   profile.days[TODAY] = (profile.days[TODAY] || 0) + session.completed;
   clearInterval(timerId);
   session = null;
+  pendingSourceWords = null;
+  pendingStartOptions = null;
   saveState();
   renderAll();
-  showToast("这一组完成，记录已保存。");
+  updateTrainingButtons();
+  showToast(message);
 }
 
 function renderWord() {
@@ -793,15 +905,22 @@ function renderWord() {
   typedValue = "";
   inputErrorIndex = -1;
   elements.typingInput.value = "";
+  const recall = isRecallItem(item);
+  elements.wordStage.classList.toggle("recall-mode", recall);
   elements.targetWord.textContent = item.word;
   elements.targetWord.setAttribute("aria-label", item.word);
-  elements.phoneticText.textContent = item.phonetic || " ";
+  elements.phoneticText.textContent = recall ? "看中文写英文" : item.phonetic || " ";
   elements.translationText.textContent = item.translation;
   renderStudyDetails(item);
   renderTyped();
   renderToggles();
+  elements.targetWord.classList.toggle("hidden", recall || profile.settings.dictation);
+  elements.phaseText.textContent = recall
+    ? "真正记忆：只看中文，把英文打出来"
+    : `熟悉拼写：第 ${item.studyPass || 1} 轮，跟着英文练一遍`;
+  elements.groupProgress.textContent = `${Math.min(recallCompletedCount() + (recall ? 1 : 0), currentBaseGroupSize())}/${currentBaseGroupSize()}`;
   updateFavoriteButton();
-  if (profile.settings.sound) speak(item.word);
+  if (profile.settings.sound && !recall) speak(item.word);
 }
 
 function renderStudyDetails(item) {
@@ -856,19 +975,25 @@ function escapeHtml(value) {
 
 function renderTyped() {
   const target = queue[currentIndex]?.word || "";
+  const recall = isRecallItem(queue[currentIndex]);
   elements.targetWord.innerHTML = [...target].map((char, index) => {
     const typed = typedValue[index];
     const classes = ["target-char"];
     if (typed === char) classes.push("filled");
     else if (index === inputErrorIndex) classes.push("wrong");
     else if (index === typedValue.length) classes.push("current");
-    return `<span class="${classes.join(" ")}">${escapeHtml(char)}</span>`;
+    const display = recall && typed !== char ? "•" : char;
+    return `<span class="${classes.join(" ")}">${escapeHtml(display)}</span>`;
   }).join("");
   elements.typedWord.textContent = `${typedValue.length}/${target.length}`;
 }
 
 function handleInput(event) {
   if (!session || !queue[currentIndex]) return;
+  if (session.paused) {
+    event.preventDefault();
+    return;
+  }
   const key = event.key;
   if (key === "Escape") {
     typedValue = "";
@@ -947,11 +1072,18 @@ function recordMistake(expected, target, item) {
 
 function completeWord() {
   const item = queue[currentIndex];
-  session.completed += 1;
-  session.words.push(item.word);
-  rewardPetForWord(item.word);
+  const recall = isRecallItem(item);
+  session.drilled += 1;
+  if (recall) {
+    session.completed += 1;
+    session.words.push(item.word);
+    addLearnedWord(item);
+    rewardPetForWord(item.word);
+  } else {
+    triggerPetAction("study", `熟悉了一遍 ${item.word}，后面会看中文默写。`, { mood: 1 });
+  }
   playSound("correct");
-  if (profile.mistakes[item.word]?.count > 0) {
+  if (recall && profile.mistakes[item.word]?.count > 0) {
     profile.mistakes[item.word].count = Math.max(0, profile.mistakes[item.word].count - 1);
     if (profile.mistakes[item.word].count === 0) delete profile.mistakes[item.word];
   }
@@ -962,15 +1094,32 @@ function completeWord() {
   renderWord();
 }
 
+function addLearnedWord(item) {
+  profile.learnedWords ||= {};
+  const current = profile.learnedWords[item.word] || {};
+  profile.learnedWords[item.word] = {
+    word: item.word,
+    translation: item.translation,
+    phonetic: item.phonetic,
+    translations: item.translations,
+    example: item.example,
+    exampleCn: item.exampleCn,
+    phrases: item.phrases,
+    learnedAt: current.learnedAt || Date.now(),
+    reviewedAt: Date.now(),
+    count: (current.count || 0) + 1
+  };
+}
+
 function updateSessionMetrics() {
   if (!session) return;
-  const elapsed = Math.max(1, Math.round((Date.now() - session.startedAt) / 1000));
+  const elapsed = sessionElapsedSeconds();
   const wpm = Math.round((session.correctChars / 5 / elapsed) * 60);
   const accuracy = Math.round((session.correctChars / Math.max(1, session.totalChars)) * 100);
   elements.timeMetric.textContent = formatTime(elapsed);
   elements.wpmMetric.textContent = wpm;
   elements.accuracyMetric.textContent = `${accuracy}%`;
-  elements.completeMetric.textContent = session.completed;
+  elements.completeMetric.textContent = `${session.completed}/${session.baseWordCount || 10}`;
 }
 
 async function speak(word) {
@@ -1243,6 +1392,17 @@ function calculateStreak() {
 
 function renderReview() {
   const mistakes = Object.values(profile.mistakes).sort((a, b) => b.count - a.count);
+  const learned = Object.values(profile.learnedWords || {}).sort((a, b) => (b.reviewedAt || b.learnedAt || 0) - (a.reviewedAt || a.learnedAt || 0));
+  if (elements.learnedList) {
+    elements.learnedList.innerHTML = learned.length
+      ? learned.slice(0, 80).map((item) => `
+        <div class="word-item">
+          <div><strong>${item.word}</strong><br><span>${item.translation} · 已记 ${item.count || 1} 次</span></div>
+          <button class="ghost-button" data-review-learned="${item.word}" type="button">复习</button>
+        </div>
+      `).join("")
+      : `<p class="empty">完成“看中文写英文”后，背过的词会进入这里。</p>`;
+  }
   elements.mistakeList.innerHTML = mistakes.length
     ? mistakes.map((item) => `
       <div class="word-item">
@@ -1269,6 +1429,7 @@ function renderDataPreview() {
     dailyGoal: profile.goal,
     sessions: profile.sessions.length,
     favorites: profile.favorites.length,
+    learnedWords: Object.keys(profile.learnedWords || {}).length,
     mistakes: Object.keys(profile.mistakes).length,
     customWords: profile.customWords.length
   };
@@ -1331,6 +1492,7 @@ function renderPet() {
   elements.petLevelText.textContent = `Lv.${pet.level}`;
   elements.petExpText.textContent = `${pet.exp}/${maxExp}`;
   renderPetShop();
+  renderPetActions();
   applyPetLook();
   const low = Math.min(pet.health, pet.mood) < 35;
   elements.petAvatar.classList.toggle("low", low);
@@ -1367,13 +1529,59 @@ function getPetOutfitItem(type, id) {
   return tab?.items.find((item) => item.id === id) || tab?.items[0];
 }
 
+function getActivePetSuit() {
+  const suitId = petPreview?.suit || profile.pet?.suit || "study";
+  return petSuits.find((item) => item.id === suitId) || petSuits[0];
+}
+
+function stopPetFrameSequence(resetImage = true) {
+  if (petFrameTimer) window.clearInterval(petFrameTimer);
+  if (petFrameResetTimer) window.clearTimeout(petFrameResetTimer);
+  petFrameTimer = null;
+  petFrameResetTimer = null;
+  petFrameToken += 1;
+  elements.petAvatar?.classList.remove("frame-playing");
+  if (resetImage && elements.petCharacter) {
+    const suit = getActivePetSuit();
+    elements.petCharacter.src = suit.image;
+    elements.petCharacter.alt = suit.name;
+  }
+}
+
+function playPetFrameSequence(motion, duration = 1200) {
+  const frameCount = petActionFrameCounts[motion];
+  if (!frameCount || !elements.petCharacter) return;
+  stopPetFrameSequence(false);
+  const token = ++petFrameToken;
+  let frameIndex = 0;
+  const interval = Math.max(55, Math.round(duration / frameCount));
+  const setFrame = () => {
+    if (token !== petFrameToken) return;
+    const frame = String(frameIndex).padStart(2, "0");
+    elements.petCharacter.src = `assets/pets/actions/${motion}/${frame}.webp`;
+    frameIndex = (frameIndex + 1) % frameCount;
+  };
+  elements.petAvatar?.classList.add("frame-playing");
+  setFrame();
+  petFrameTimer = window.setInterval(setFrame, interval);
+  petFrameResetTimer = window.setTimeout(() => {
+    if (token === petFrameToken) stopPetFrameSequence(true);
+  }, duration + 80);
+}
+
 function applyPetLook() {
   const preview = petPreview || {};
   const outfit = { ...(profile.pet.outfit || {}), ...(preview.outfit || {}) };
+  const suit = getActivePetSuit();
   const skinId = preview.skin || profile.pet.skin;
   const skin = petSkins.find((item) => item.id === skinId) || petSkins[0];
-  elements.petAvatar.className = `pet-avatar ${skin.className}`;
+  stopPetFrameSequence(false);
+  elements.petAvatar.className = `pet-avatar has-art ${skin.className}`;
   elements.petAvatar.dataset.skinLabel = skin.label;
+  if (elements.petCharacter) {
+    elements.petCharacter.src = suit.image;
+    elements.petCharacter.alt = suit.name;
+  }
   [
     ["upper", elements.petUpperLayer],
     ["lower", elements.petLowerLayer],
@@ -1395,21 +1603,24 @@ function renderPetShop() {
     `).join("");
   }
   if (elements.petShopHint) {
-    elements.petShopHint.textContent = "左键解锁/穿戴，右键预览。换皮肤会同步切换网页主题。";
+    elements.petShopHint.textContent = "左键解锁/穿戴，右键预览。套装会直接更换角色立绘。";
   }
-  const owned = activeTab.id === "skin"
+  const owned = activeTab.id === "suit"
+    ? new Set(profile.pet.suitsOwned || ["study"])
+    : activeTab.id === "skin"
     ? new Set(profile.pet.skinsOwned || ["default"])
     : new Set(profile.pet.outfitsOwned?.[activeTab.id] || []);
-  const activeId = activeTab.id === "skin" ? profile.pet.skin : profile.pet.outfit?.[activeTab.id];
+  const activeId = activeTab.id === "suit" ? profile.pet.suit : activeTab.id === "skin" ? profile.pet.skin : profile.pet.outfit?.[activeTab.id];
   elements.petSkinGrid.innerHTML = activeTab.items.map((item) => {
     const isOwned = owned.has(item.id);
     const active = activeId === item.id;
-    const previewing = activeTab.id === "skin" ? petPreview?.skin === item.id : petPreview?.outfit?.[activeTab.id] === item.id;
+    const previewing = activeTab.id === "suit" ? petPreview?.suit === item.id : activeTab.id === "skin" ? petPreview?.skin === item.id : petPreview?.outfit?.[activeTab.id] === item.id;
     const action = active ? "使用中" : isOwned ? "换上" : `${item.price} 精力`;
-    const previewClass = activeTab.id === "skin" ? "skin-preview" : `outfit-preview ${activeTab.id}`;
+    const previewClass = activeTab.id === "suit" ? "suit-preview" : activeTab.id === "skin" ? "skin-preview" : `outfit-preview ${activeTab.id}`;
+    const style = activeTab.id === "suit" ? ` style="--suit-image: url('${item.image}')"` : "";
     return `
       <button class="skin-card ${active ? "active" : ""} ${previewing ? "previewing" : ""}" type="button" data-shop-type="${activeTab.id}" data-shop-id="${item.id}">
-        <span class="${previewClass} ${item.className}" data-skin-label="${item.label}"></span>
+        <span class="${previewClass} ${item.className || ""}" data-skin-label="${item.label}"${style}></span>
         <strong>${item.name}</strong>
         <em>${action}</em>
       </button>
@@ -1417,7 +1628,25 @@ function renderPetShop() {
   }).join("");
 }
 
+function renderPetActions() {
+  if (!elements.petActionGrid) return;
+  elements.petActionGrid.innerHTML = petActionDefs.map((action) => `
+    <button type="button" data-pet-action="${action.id}">
+      <span>${action.icon}</span>
+      <strong>${action.label}</strong>
+    </button>
+  `).join("");
+}
+
+function renderPetMotionEffects(definition) {
+  if (!elements.petMotionLayer) return;
+  const effects = definition.effects?.length ? definition.effects : [definition.icon || ""];
+  const slots = Array.from({ length: 8 }, (_, index) => effects[index % effects.length] || "");
+  elements.petMotionLayer.innerHTML = slots.map((effect, index) => `<i style="--i:${index}">${escapeHtml(effect)}</i>`).join("");
+}
+
 function unlockOrEquipPetItem(type, itemId) {
+  if (type === "suit") return choosePetSuit(itemId);
   if (type === "skin") return choosePetSkin(itemId);
   const tab = petShopTabs.find((item) => item.id === type);
   const item = tab?.items.find((entry) => entry.id === itemId);
@@ -1445,14 +1674,15 @@ function unlockOrEquipPetItem(type, itemId) {
 
 function previewPetItem(type, itemId) {
   if (petPreviewTimer) clearTimeout(petPreviewTimer);
-  petPreview = type === "skin"
+  petPreview = type === "suit"
+    ? { suit: itemId, outfit: {} }
+    : type === "skin"
     ? { skin: itemId, outfit: {} }
     : { outfit: { [type]: itemId } };
   const tab = petShopTabs.find((item) => item.id === type);
   const item = tab?.items.find((entry) => entry.id === itemId);
-  if (type === "skin") {
-    const skin = petSkins.find((entry) => entry.id === itemId);
-    document.body.className = `theme-${skin?.theme || profile.theme || "light"}`;
+  if (type === "skin" || type === "suit") {
+    document.body.className = `theme-${item?.theme || profile.theme || "light"}`;
   }
   petSay(`预览 ${item?.name || "装扮"}，5 秒后自动恢复。`);
   renderPet();
@@ -1490,6 +1720,30 @@ function choosePetSkin(skinId) {
   saveState();
 }
 
+function choosePetSuit(suitId) {
+  const suit = petSuits.find((item) => item.id === suitId);
+  if (!suit) return;
+  profile.pet.suitsOwned ||= ["study"];
+  const owned = profile.pet.suitsOwned.includes(suitId);
+  if (!owned) {
+    if (profile.pet.energy < suit.price) {
+      petSay(`还差 ${suit.price - profile.pet.energy} 精力，背几个词再来解锁。`);
+      return;
+    }
+    profile.pet.energy = Math.max(0, Math.round(profile.pet.energy - suit.price));
+    profile.pet.suitsOwned.push(suitId);
+    petSay(`解锁了 ${suit.name}。`);
+  } else {
+    petSay(`换上 ${suit.name}。`);
+  }
+  profile.pet.suit = suitId;
+  profile.theme = suit.theme || profile.theme;
+  if (elements.themeSetting) elements.themeSetting.value = profile.theme;
+  clearPetPreview();
+  triggerPetAction("change", `青柚换上了 ${suit.name}。`, { mood: 4 });
+  saveState();
+}
+
 function updatePet(delta, message = "") {
   const pet = profile.pet;
   pet.health = clampStat(pet.health + (delta.health || 0));
@@ -1507,16 +1761,55 @@ function updatePet(delta, message = "") {
   saveState();
 }
 
+function triggerPetAction(actionId, message = "", delta = {}) {
+  const definition = petActionDefs.find((item) => item.id === actionId) || { id: actionId, motion: actionId, icon: "", message, delta };
+  const motion = definition.motion || definition.id;
+  if (motion !== "sleep") profile.pet.sleeping = false;
+  updatePet({ ...(definition.delta || {}), ...delta }, message || definition.message || "");
+  renderPetMotionEffects(definition);
+  if (elements.petAvatar) {
+    const actionClasses = petActionDefs.map((item) => `action-${item.motion || item.id}`).concat(["action-pat", "action-play", "action-focus", "action-change", "actioning"]);
+    elements.petAvatar.classList.remove(...new Set(actionClasses));
+    elements.petAvatar.dataset.motion = motion;
+    elements.petAvatar.dataset.effect = definition.icon || "";
+    void elements.petAvatar.offsetWidth;
+    elements.petAvatar.classList.add("actioning", `action-${motion}`);
+    playPetFrameSequence(motion, definition.duration || 1200);
+    window.setTimeout(() => {
+      elements.petAvatar?.classList.remove("actioning", `action-${motion}`);
+      if (elements.petAvatar) {
+        elements.petAvatar.dataset.effect = "";
+        elements.petAvatar.dataset.motion = "";
+      }
+      if (elements.petMotionLayer) elements.petMotionLayer.innerHTML = "";
+    }, definition.duration || 1200);
+  }
+}
+
+function randomPetIdleTalk() {
+  if (!profile?.pet || profile.pet.collapsed || profile.pet.sleeping) return;
+  const lines = [
+    "我在旁边陪练，背完一个词就给你加 1 精力。",
+    "今天可以先冲一个小目标，不用一次背太多。",
+    "要不要换套装？精力够了就可以解锁。",
+    "手感卡住的时候，慢一点反而更稳。"
+  ];
+  petSay(lines[Math.floor(Math.random() * lines.length)]);
+}
+
 function rewardPetForWord(word) {
   profile.pet.sleeping = false;
-  updatePet({ health: 6, mood: 4, energy: 1, exp: 5 }, `记住 ${word} 了，我恢复了一点状态，也获得了 1 精力。`);
-  elements.petAvatar.classList.remove("celebrate");
-  void elements.petAvatar.offsetWidth;
-  elements.petAvatar.classList.add("celebrate");
+  triggerPetAction("celebrate", `记住 ${word} 了，我恢复了一点状态，也获得了 1 精力。`, {
+    health: 6,
+    mood: 4,
+    energy: 1,
+    exp: 5
+  });
+  return;
 }
 
 function nudgePetForMistake() {
-  updatePet({ mood: -1 }, "这个键有点卡，我们慢一点。");
+  triggerPetAction("confused");
 }
 
 function decayPet() {
@@ -1701,6 +1994,7 @@ function renderAccounts() {
 function renderAll() {
   populateSelects();
   renderProfile();
+  updateTrainingButtons();
   renderSettings();
   renderToggles();
   renderKeyboard();
@@ -1758,6 +2052,8 @@ function bindEvents() {
   elements.loopInput.addEventListener("change", renderChapters);
   elements.modeSelect.addEventListener("change", renderChapters);
   elements.startButton.addEventListener("click", () => startPractice());
+  elements.pauseButton?.addEventListener("click", pausePractice);
+  elements.stopButton?.addEventListener("click", stopPractice);
   elements.wordStage.addEventListener("click", () => elements.typingInput.focus());
   document.addEventListener("keydown", (event) => {
     if (event.target.matches("input, textarea, select") && event.target !== elements.typingInput) return;
@@ -1857,9 +2153,11 @@ function bindEvents() {
     saveState();
     renderPet();
   });
-  elements.petAvatar.addEventListener("click", () => updatePet({ mood: 6 }, "摸摸有效，继续练一个词吧。"));
-  elements.petFeedButton.addEventListener("click", () => updatePet({ health: 10, mood: 2 }, "补充好了，不过精力主要还是靠背词。"));
-  elements.petPlayButton.addEventListener("click", () => updatePet({ mood: 10 }, "互动完成，心情变好了。"));
+  elements.petAvatar.addEventListener("click", () => triggerPetAction("happy", "摸摸有效，青柚精神了一点。", { mood: 6 }));
+  elements.petFeedButton.addEventListener("click", () => triggerPetAction("eat"));
+  elements.petPlayButton.addEventListener("click", () => triggerPetAction("cheer"));
+  elements.petWaveButton?.addEventListener("click", () => triggerPetAction("wave"));
+  elements.petFocusButton?.addEventListener("click", () => triggerPetAction("study"));
   elements.petSleepButton.addEventListener("click", () => {
     profile.pet.sleeping = !profile.pet.sleeping;
     if (profile.pet.sleeping) {
@@ -1888,8 +2186,13 @@ function bindEvents() {
     clearPetPreview();
     renderPetShop();
   });
+  elements.petActionGrid?.addEventListener("click", (event) => {
+    const actionId = event.target.closest("[data-pet-action]")?.dataset.petAction;
+    if (actionId) triggerPetAction(actionId);
+  });
   bindPetDrag();
   setInterval(decayPet, 60000);
+  setInterval(randomPetIdleTalk, 45000);
 
   elements.themeButton.addEventListener("click", () => {
     profile.theme = themeOrder[(themeOrder.indexOf(profile.theme) + 1) % themeOrder.length] || "light";
@@ -1974,12 +2277,18 @@ function bindEvents() {
   elements.practiceMistakesButton.addEventListener("click", () => {
     const words = Object.values(profile.mistakes).map(normalizeWord);
     setView("practice");
-    startPractice(words);
+    startPractice(words, { review: true, forceRecall: true });
   });
 
   elements.practiceFavsButton.addEventListener("click", () => {
     setView("practice");
-    startPractice(profile.favorites);
+    startPractice(profile.favorites, { review: true, forceRecall: true });
+  });
+
+  elements.practiceLearnedButton?.addEventListener("click", () => {
+    const words = Object.values(profile.learnedWords || {}).map(normalizeWord);
+    setView("practice");
+    startPractice(words, { review: true, forceRecall: true });
   });
 
   elements.dictSearch.addEventListener("input", renderCatalog);
@@ -1988,6 +2297,7 @@ function bindEvents() {
   document.addEventListener("click", (event) => {
     const mistake = event.target.dataset.removeMistake;
     const fav = event.target.dataset.removeFav;
+    const reviewLearned = event.target.dataset.reviewLearned;
     const useDict = event.target.dataset.useDict;
     if (mistake) delete profile.mistakes[mistake];
     if (fav) profile.favorites = profile.favorites.filter((item) => item.word !== fav);
@@ -1998,6 +2308,13 @@ function bindEvents() {
       saveState();
       renderAll();
       showToast("已切换到这个官方词库。");
+    }
+    if (reviewLearned) {
+      const item = profile.learnedWords?.[reviewLearned];
+      if (item) {
+        setView("practice");
+        startPractice([item], { review: true, forceRecall: true });
+      }
     }
     if (mistake || fav) {
       saveState();

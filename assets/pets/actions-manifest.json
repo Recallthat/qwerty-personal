@@ -1,0 +1,82 @@
+{
+  "wave": {
+    "count": 12,
+    "duration": 1200
+  },
+  "hungry": {
+    "count": 12,
+    "duration": 1200
+  },
+  "eat": {
+    "count": 12,
+    "duration": 1200
+  },
+  "drink": {
+    "count": 12,
+    "duration": 1200
+  },
+  "sleepy": {
+    "count": 12,
+    "duration": 1200
+  },
+  "stretch": {
+    "count": 12,
+    "duration": 1200
+  },
+  "focus": {
+    "count": 12,
+    "duration": 1200
+  },
+  "think": {
+    "count": 12,
+    "duration": 1200
+  },
+  "confused": {
+    "count": 12,
+    "duration": 1200
+  },
+  "cheer": {
+    "count": 12,
+    "duration": 1200
+  },
+  "celebrate": {
+    "count": 14,
+    "duration": 1330
+  },
+  "shy": {
+    "count": 12,
+    "duration": 1200
+  },
+  "happy": {
+    "count": 12,
+    "duration": 1200
+  },
+  "angry": {
+    "count": 10,
+    "duration": 1200
+  },
+  "music": {
+    "count": 12,
+    "duration": 1200
+  },
+  "sparkle": {
+    "count": 12,
+    "duration": 1200
+  },
+  "exercise": {
+    "count": 12,
+    "duration": 1200
+  },
+  "review": {
+    "count": 12,
+    "duration": 1200
+  },
+  "relax": {
+    "count": 12,
+    "duration": 1200
+  },
+  "surprise": {
+    "count": 12,
+    "duration": 1200
+  }
+}

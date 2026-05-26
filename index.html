@@ -72,7 +72,9 @@
           </div>
           <div class="top-actions">
             <button class="icon-button" id="themeButton" type="button" title="切换主题">◐</button>
-            <button class="primary-button" id="startButton" type="button">开始练习</button>
+            <button class="primary-button" id="startButton" type="button">开始训练</button>
+            <button class="ghost-button training-control hidden" id="pauseButton" type="button">暂停</button>
+            <button class="ghost-button danger-button training-control hidden" id="stopButton" type="button">停止</button>
           </div>
         </header>
 
@@ -97,8 +99,8 @@
                   </select>
                 </label>
                 <label>
-                  数量
-                  <input id="loopInput" type="number" min="5" max="80" value="20" />
+                  每组
+                  <input id="loopInput" type="number" min="10" max="10" value="10" />
                 </label>
               </div>
 
@@ -109,6 +111,10 @@
                   <button class="toggle" id="dictationToggle" type="button">默写</button>
                   <button class="toggle active" id="strictToggle" type="button">严格</button>
                   <button class="toggle active" id="keySoundToggle" type="button">键音</button>
+                </div>
+                <div class="study-flow" id="studyFlow">
+                  <span id="phaseText">先熟悉，再默写</span>
+                  <strong id="groupProgress">0/10</strong>
                 </div>
                 <p class="phonetic" id="phoneticText">准备开始</p>
                 <div class="target-word" id="targetWord">practice</div>
@@ -213,8 +219,18 @@
           </div>
         </section>
 
-        <section class="view" id="reviewView" data-title="错词复习">
+        <section class="view" id="reviewView" data-title="复习中心">
           <div class="review-layout">
+            <section class="review-panel">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Learned Words</p>
+                  <h2>已学单词复习</h2>
+                </div>
+                <button class="primary-button" id="practiceLearnedButton" type="button">看中文写英文</button>
+              </div>
+              <div id="learnedList" class="word-list"></div>
+            </section>
             <section class="review-panel">
               <div class="section-head">
                 <div>
@@ -443,6 +459,9 @@
           <button class="icon-button pet-minimize" id="petMinimizeButton" type="button" title="收起桌宠">−</button>
         </div>
         <button class="pet-avatar" id="petAvatar" type="button" title="摸摸它">
+          <img class="pet-character" id="petCharacter" src="assets/pets/aoi-study.webp" alt="" onerror="this.onerror=null;this.src='assets/pets/aoi-study-crop.png';" />
+          <span class="pet-shadow"></span>
+          <span class="pet-motion-layer" id="petMotionLayer" aria-hidden="true"></span>
           <span class="pet-hair-back"></span>
           <span class="pet-head-shape"></span>
           <span class="pet-ear left"></span>
@@ -471,8 +490,14 @@
         <div class="pet-actions">
           <button type="button" id="petFeedButton">喂食</button>
           <button type="button" id="petPlayButton">互动</button>
+          <button type="button" id="petWaveButton">招呼</button>
+          <button type="button" id="petFocusButton">陪练</button>
           <button type="button" id="petSleepButton">小睡</button>
         </div>
+        <details class="pet-action-panel">
+          <summary>20 套动作</summary>
+          <div class="pet-action-grid" id="petActionGrid"></div>
+        </details>
         <details class="pet-shop" id="petShop">
           <summary>
             <span>装扮商店</span>
