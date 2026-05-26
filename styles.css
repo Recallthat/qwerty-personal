@@ -1336,6 +1336,10 @@ dialog::backdrop {
   animation: petEffectPop 0.9s ease both;
 }
 
+.pet-avatar.actioning {
+  animation: petAvatarStage 1.2s ease both;
+}
+
 .pet-avatar:hover {
   transform: translateY(-2px) scale(1.02);
 }
@@ -1606,6 +1610,66 @@ dialog::backdrop {
   animation: petFloat 3.8s ease-in-out infinite;
 }
 
+.pet-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  z-index: 1;
+  width: 118px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(24, 39, 69, 0.18), transparent 70%);
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: petShadowFloat 3.8s ease-in-out infinite;
+}
+
+.pet-motion-layer {
+  position: absolute;
+  inset: -16px -18px -8px -18px;
+  z-index: 7;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.pet-motion-layer i {
+  position: absolute;
+  left: calc(14% + (var(--i) % 4) * 22%);
+  top: calc(8% + (var(--i) % 3) * 22%);
+  min-width: 22px;
+  min-height: 22px;
+  display: grid;
+  place-items: center;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+  color: var(--accent);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+  opacity: 0;
+  transform: translateY(10px) scale(0.72);
+}
+
+.pet-avatar.actioning .pet-motion-layer i {
+  animation: petParticle 1.35s ease both;
+  animation-delay: calc(var(--i) * 0.075s);
+}
+
+.pet-avatar.actioning[data-motion="music"] .pet-motion-layer i,
+.pet-avatar.actioning[data-motion="sparkle"] .pet-motion-layer i,
+.pet-avatar.actioning[data-motion="celebrate"] .pet-motion-layer i {
+  background: color-mix(in srgb, var(--accent) 18%, var(--panel));
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 34%, transparent);
+}
+
+.pet-avatar.actioning[data-motion="hungry"] .pet-motion-layer i,
+.pet-avatar.actioning[data-motion="sleepy"] .pet-motion-layer i,
+.pet-avatar.actioning[data-motion="review"] .pet-motion-layer i {
+  left: calc(8% + (var(--i) % 4) * 24%);
+}
+
 .pet-avatar::before,
 .pet-avatar .pet-hair-back,
 .pet-avatar .pet-head-shape,
@@ -1662,62 +1726,82 @@ dialog::backdrop {
 }
 
 .pet-avatar.action-wave .pet-character {
-  animation: petWave 0.88s ease both;
+  animation: petWave 1.5s ease both;
 }
 
 .pet-avatar.action-focus .pet-character {
-  animation: petFocus 0.95s ease both;
+  animation: petFocus 1.7s ease both;
 }
 
 .pet-avatar.action-change .pet-character {
   animation: petChange 0.8s ease both;
 }
 
+.pet-avatar.action-celebrate .pet-character {
+  animation: petCelebrateSpin 1.7s ease both;
+}
+
+.pet-avatar.action-sparkle .pet-character {
+  animation: petSparkleBody 1.7s ease both;
+}
+
+.pet-avatar.action-review .pet-character {
+  animation: petReviewBook 1.7s ease both;
+}
+
+.pet-avatar.action-surprise .pet-character {
+  animation: petSurprisePop 1.5s ease both;
+}
+
 .pet-avatar.action-hungry .pet-character {
-  animation: petHungry 1.1s ease both;
+  animation: petHungry 1.7s ease both;
 }
 
 .pet-avatar.action-eat .pet-character,
 .pet-avatar.action-drink .pet-character,
 .pet-avatar.action-relax .pet-character {
-  animation: petNibble 1.1s ease both;
+  animation: petNibble 1.5s ease both;
 }
 
 .pet-avatar.action-sleepy .pet-character {
-  animation: petSleepy 1.2s ease both;
+  animation: petSleepy 1.8s ease both;
 }
 
 .pet-avatar.action-stretch .pet-character,
 .pet-avatar.action-exercise .pet-character {
-  animation: petStretch 1.1s ease both;
+  animation: petStretch 1.7s ease both;
 }
 
 .pet-avatar.action-think .pet-character,
 .pet-avatar.action-review .pet-character {
-  animation: petThink 1.2s ease both;
+  animation: petThink 1.8s ease both;
 }
 
 .pet-avatar.action-confused .pet-character {
-  animation: petConfused 1.1s ease both;
+  animation: petConfused 1.5s ease both;
 }
 
 .pet-avatar.action-cheer .pet-character,
 .pet-avatar.action-happy .pet-character,
 .pet-avatar.action-sparkle .pet-character,
 .pet-avatar.action-surprise .pet-character {
-  animation: petCheer 1s ease both;
+  animation: petCheer 1.5s ease both;
 }
 
 .pet-avatar.action-shy .pet-character {
-  animation: petShy 1.1s ease both;
+  animation: petShy 1.5s ease both;
 }
 
 .pet-avatar.action-angry .pet-character {
-  animation: petAngry 0.9s ease both;
+  animation: petAngry 1.3s ease both;
 }
 
 .pet-avatar.action-music .pet-character {
-  animation: petMusic 1.1s ease both;
+  animation: petMusic 1.7s ease both;
+}
+
+.pet-avatar.frame-playing .pet-character {
+  animation: none !important;
 }
 
 .pet-avatar.sleeping .pet-character {
@@ -2432,6 +2516,23 @@ dialog::backdrop {
   50% { transform: translateX(-50%) translateY(-6px) rotate(0.8deg); }
 }
 
+@keyframes petShadowFloat {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.72; }
+  50% { transform: translateX(-50%) scale(0.86); opacity: 0.42; }
+}
+
+@keyframes petAvatarStage {
+  0%, 100% { transform: translateY(0); }
+  45% { transform: translateY(-3px); }
+}
+
+@keyframes petParticle {
+  0% { opacity: 0; transform: translateY(12px) scale(0.62) rotate(-8deg); }
+  22% { opacity: 1; transform: translateY(0) scale(1) rotate(2deg); }
+  78% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-34px) scale(0.88) rotate(12deg); }
+}
+
 @keyframes petPat {
   0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
   35% { transform: translateX(-50%) translateY(6px) scale(0.96, 1.04); }
@@ -2461,6 +2562,31 @@ dialog::backdrop {
   0% { transform: translateX(-50%) scale(0.88); opacity: 0.3; }
   55% { transform: translateX(-50%) scale(1.08); opacity: 1; }
   100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+@keyframes petCelebrateSpin {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(0) scale(1); }
+  22% { transform: translateX(-50%) translateY(-16px) rotate(-8deg) scale(1.04); }
+  48% { transform: translateX(-50%) translateY(-4px) rotate(8deg) scale(1.02); }
+  72% { transform: translateX(-50%) translateY(-12px) rotate(-5deg) scale(1.05); }
+}
+
+@keyframes petSparkleBody {
+  0%, 100% { transform: translateX(-50%) scale(1); filter: drop-shadow(0 16px 20px rgba(24, 39, 69, 0.18)); }
+  45% { transform: translateX(-50%) scale(1.06); filter: drop-shadow(0 0 24px rgba(255, 205, 87, 0.52)); }
+}
+
+@keyframes petReviewBook {
+  0%, 100% { transform: translateX(-50%) rotate(0); }
+  18% { transform: translateX(calc(-50% - 8px)) rotate(-5deg); }
+  40% { transform: translateX(calc(-50% + 6px)) rotate(3deg); }
+  70% { transform: translateX(-50%) translateY(-5px) rotate(0); }
+}
+
+@keyframes petSurprisePop {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  30% { transform: translateX(-50%) translateY(-10px) scale(1.12); }
+  58% { transform: translateX(-50%) translateY(2px) scale(0.96, 1.04); }
 }
 
 @keyframes petSleep {

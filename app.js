@@ -122,28 +122,54 @@ const petShopTabs = [
 let activePetShopTab = "suit";
 let petPreview = null;
 let petPreviewTimer = null;
+let petFrameTimer = null;
+let petFrameResetTimer = null;
+let petFrameToken = 0;
+
+const petActionFrameCounts = {
+  angry: 10,
+  celebrate: 14,
+  cheer: 12,
+  confused: 12,
+  drink: 12,
+  eat: 14,
+  exercise: 12,
+  focus: 12,
+  happy: 12,
+  hungry: 14,
+  music: 12,
+  relax: 12,
+  review: 12,
+  shy: 12,
+  sleepy: 12,
+  sparkle: 12,
+  stretch: 12,
+  surprise: 12,
+  think: 12,
+  wave: 14
+};
 
 const petActionDefs = [
-  { id: "wave", label: "打招呼", icon: "Hi", motion: "wave", message: "青柚向你挥手：今天也一起练吧。", delta: { mood: 3 } },
-  { id: "hungry", label: "饿了", icon: "饭", motion: "hungry", message: "青柚摸摸肚子：有点饿了，背几个词再给我换点好吃的吧。", delta: { mood: -1 } },
-  { id: "eat", label: "吃饭", icon: "吃", motion: "eat", message: "青柚吃饱了，状态恢复了一些。", delta: { health: 10, mood: 2 } },
-  { id: "drink", label: "喝水", icon: "水", motion: "drink", message: "喝口水，打字也要记得休息眼睛。", delta: { health: 3, mood: 2 } },
-  { id: "sleepy", label: "犯困", icon: "Zz", motion: "sleepy", message: "青柚揉揉眼睛：有点困，想小睡一下。", delta: { mood: -1 } },
-  { id: "stretch", label: "伸懒腰", icon: "伸", motion: "stretch", message: "青柚伸了个懒腰：肩膀放松，再继续。", delta: { health: 3, mood: 3 } },
-  { id: "study", label: "陪练", icon: "书", motion: "focus", message: "进入陪练模式：接下来 10 个词我都看着你。", delta: { mood: 4, health: 2 } },
-  { id: "think", label: "思考", icon: "?", motion: "think", message: "青柚正在思考：这个词的拼写结构可以拆开记。", delta: { mood: 1 } },
-  { id: "confused", label: "疑惑", icon: "错", motion: "confused", message: "青柚歪头：刚刚这个键位好像有点乱，我们慢一点。", delta: { mood: -1 } },
-  { id: "cheer", label: "鼓励", icon: "加油", motion: "cheer", message: "青柚给你打气：稳定正确率，比硬冲速度更重要。", delta: { mood: 5 } },
-  { id: "celebrate", label: "庆祝", icon: "✓", motion: "celebrate", message: "答对啦！青柚开心地转了一圈。", delta: { mood: 6, exp: 2 } },
-  { id: "shy", label: "害羞", icon: "羞", motion: "shy", message: "被你夸了，青柚有点不好意思。", delta: { mood: 4 } },
-  { id: "happy", label: "开心", icon: "乐", motion: "happy", message: "青柚今天心情很好，练词也会更顺。", delta: { mood: 6 } },
-  { id: "angry", label: "认真", icon: "!", motion: "angry", message: "青柚认真起来了：错词不能放过，复习区见。", delta: { mood: 1 } },
-  { id: "music", label: "哼歌", icon: "♪", motion: "music", message: "青柚小声哼歌，键盘节奏也跟着稳起来。", delta: { mood: 5 } },
-  { id: "sparkle", label: "闪亮", icon: "星", motion: "sparkle", message: "今日手感闪闪发光，继续保持。", delta: { mood: 4 } },
-  { id: "exercise", label: "活动", icon: "动", motion: "exercise", message: "青柚活动了一下：久坐了也要动动手腕。", delta: { health: 5, mood: 2 } },
-  { id: "review", label: "复习", icon: "复", motion: "review", message: "青柚翻开错词本：先复习最容易错的那几个。", delta: { health: 1, mood: 2 } },
-  { id: "relax", label: "放松", icon: "茶", motion: "relax", message: "喝口茶，放松一下，下一组再冲。", delta: { health: 4, mood: 4 } },
-  { id: "surprise", label: "惊喜", icon: "哇", motion: "surprise", message: "青柚眼睛一亮：这个词你记得比上次快多了。", delta: { mood: 5, exp: 1 } }
+  { id: "wave", label: "打招呼", icon: "Hi", motion: "wave", effects: ["Hi", "✦", "✦", "♡"], duration: 1500, message: "青柚向你挥手：今天也一起练吧。", delta: { mood: 3 } },
+  { id: "hungry", label: "饿了", icon: "饭", motion: "hungry", effects: ["饭", "…", "🍙", "?"], duration: 1700, message: "青柚摸摸肚子：有点饿了，背几个词再给我换点好吃的吧。", delta: { mood: -1 } },
+  { id: "eat", label: "吃饭", icon: "吃", motion: "eat", effects: ["🍙", "吃", "♪", "♡"], duration: 1500, message: "青柚吃饱了，状态恢复了一些。", delta: { health: 10, mood: 2 } },
+  { id: "drink", label: "喝水", icon: "水", motion: "drink", effects: ["水", "💧", "💧", "OK"], duration: 1500, message: "喝口水，打字也要记得休息眼睛。", delta: { health: 3, mood: 2 } },
+  { id: "sleepy", label: "犯困", icon: "Zz", motion: "sleepy", effects: ["Zz", "Z", "…", "☁"], duration: 1800, message: "青柚揉揉眼睛：有点困，想小睡一下。", delta: { mood: -1 } },
+  { id: "stretch", label: "伸懒腰", icon: "伸", motion: "stretch", effects: ["伸", "呼", "✦", "OK"], duration: 1600, message: "青柚伸了个懒腰：肩膀放松，再继续。", delta: { health: 3, mood: 3 } },
+  { id: "study", label: "陪练", icon: "书", motion: "focus", effects: ["书", "10", "词", "✓"], duration: 1700, message: "进入陪练模式：接下来 10 个词我都看着你。", delta: { mood: 4, health: 2 } },
+  { id: "think", label: "思考", icon: "?", motion: "think", effects: ["?", "abc", "拆", "记"], duration: 1800, message: "青柚正在思考：这个词的拼写结构可以拆开记。", delta: { mood: 1 } },
+  { id: "confused", label: "疑惑", icon: "错", motion: "confused", effects: ["?", "错", "!", "…"], duration: 1500, message: "青柚歪头：刚刚这个键位好像有点乱，我们慢一点。", delta: { mood: -1 } },
+  { id: "cheer", label: "鼓励", icon: "加油", motion: "cheer", effects: ["加油", "↑", "✦", "✓"], duration: 1500, message: "青柚给你打气：稳定正确率，比硬冲速度更重要。", delta: { mood: 5 } },
+  { id: "celebrate", label: "庆祝", icon: "✓", motion: "celebrate", effects: ["✓", "★", "★", "棒"], duration: 1700, message: "答对啦！青柚开心地转了一圈。", delta: { mood: 6, exp: 2 } },
+  { id: "shy", label: "害羞", icon: "羞", motion: "shy", effects: ["羞", "♡", "///", "…"], duration: 1500, message: "被你夸了，青柚有点不好意思。", delta: { mood: 4 } },
+  { id: "happy", label: "开心", icon: "乐", motion: "happy", effects: ["乐", "♡", "✦", "♪"], duration: 1400, message: "青柚今天心情很好，练词也会更顺。", delta: { mood: 6 } },
+  { id: "angry", label: "认真", icon: "!", motion: "angry", effects: ["!", "错词", "复习", "!"], duration: 1400, message: "青柚认真起来了：错词不能放过，复习区见。", delta: { mood: 1 } },
+  { id: "music", label: "哼歌", icon: "♪", motion: "music", effects: ["♪", "♫", "♪", "♬"], duration: 1700, message: "青柚小声哼歌，键盘节奏也跟着稳起来。", delta: { mood: 5 } },
+  { id: "sparkle", label: "闪亮", icon: "星", motion: "sparkle", effects: ["星", "✦", "✧", "★"], duration: 1700, message: "今日手感闪闪发光，继续保持。", delta: { mood: 4 } },
+  { id: "exercise", label: "活动", icon: "动", motion: "exercise", effects: ["动", "1", "2", "腕"], duration: 1700, message: "青柚活动了一下：久坐了也要动动手腕。", delta: { health: 5, mood: 2 } },
+  { id: "review", label: "复习", icon: "复", motion: "review", effects: ["复", "错词", "本", "✓"], duration: 1700, message: "青柚翻开错词本：先复习最容易错的那几个。", delta: { health: 1, mood: 2 } },
+  { id: "relax", label: "放松", icon: "茶", motion: "relax", effects: ["茶", "☁", "呼", "♪"], duration: 1800, message: "喝口茶，放松一下，下一组再冲。", delta: { health: 4, mood: 4 } },
+  { id: "surprise", label: "惊喜", icon: "哇", motion: "surprise", effects: ["哇", "!", "★", "快"], duration: 1500, message: "青柚眼睛一亮：这个词你记得比上次快多了。", delta: { mood: 5, exp: 1 } }
 ];
 
 const defaultProfile = (name = "我的账号") => ({
@@ -344,6 +370,7 @@ const elements = {
   petFace: $("#petFace"),
   petAvatar: $("#petAvatar"),
   petCharacter: $("#petCharacter"),
+  petMotionLayer: $("#petMotionLayer"),
   petMinimizeButton: $("#petMinimizeButton"),
   petDockButton: $("#petDockButton"),
   petFeedButton: $("#petFeedButton"),
@@ -1502,13 +1529,53 @@ function getPetOutfitItem(type, id) {
   return tab?.items.find((item) => item.id === id) || tab?.items[0];
 }
 
+function getActivePetSuit() {
+  const suitId = petPreview?.suit || profile.pet?.suit || "study";
+  return petSuits.find((item) => item.id === suitId) || petSuits[0];
+}
+
+function stopPetFrameSequence(resetImage = true) {
+  if (petFrameTimer) window.clearInterval(petFrameTimer);
+  if (petFrameResetTimer) window.clearTimeout(petFrameResetTimer);
+  petFrameTimer = null;
+  petFrameResetTimer = null;
+  petFrameToken += 1;
+  elements.petAvatar?.classList.remove("frame-playing");
+  if (resetImage && elements.petCharacter) {
+    const suit = getActivePetSuit();
+    elements.petCharacter.src = suit.image;
+    elements.petCharacter.alt = suit.name;
+  }
+}
+
+function playPetFrameSequence(motion, duration = 1200) {
+  const frameCount = petActionFrameCounts[motion];
+  if (!frameCount || !elements.petCharacter) return;
+  stopPetFrameSequence(false);
+  const token = ++petFrameToken;
+  let frameIndex = 0;
+  const interval = Math.max(55, Math.round(duration / frameCount));
+  const setFrame = () => {
+    if (token !== petFrameToken) return;
+    const frame = String(frameIndex).padStart(2, "0");
+    elements.petCharacter.src = `assets/pets/actions/${motion}/${frame}.webp`;
+    frameIndex = (frameIndex + 1) % frameCount;
+  };
+  elements.petAvatar?.classList.add("frame-playing");
+  setFrame();
+  petFrameTimer = window.setInterval(setFrame, interval);
+  petFrameResetTimer = window.setTimeout(() => {
+    if (token === petFrameToken) stopPetFrameSequence(true);
+  }, duration + 80);
+}
+
 function applyPetLook() {
   const preview = petPreview || {};
   const outfit = { ...(profile.pet.outfit || {}), ...(preview.outfit || {}) };
-  const suitId = preview.suit || profile.pet.suit || "study";
-  const suit = petSuits.find((item) => item.id === suitId) || petSuits[0];
+  const suit = getActivePetSuit();
   const skinId = preview.skin || profile.pet.skin;
   const skin = petSkins.find((item) => item.id === skinId) || petSkins[0];
+  stopPetFrameSequence(false);
   elements.petAvatar.className = `pet-avatar has-art ${skin.className}`;
   elements.petAvatar.dataset.skinLabel = skin.label;
   if (elements.petCharacter) {
@@ -1569,6 +1636,13 @@ function renderPetActions() {
       <strong>${action.label}</strong>
     </button>
   `).join("");
+}
+
+function renderPetMotionEffects(definition) {
+  if (!elements.petMotionLayer) return;
+  const effects = definition.effects?.length ? definition.effects : [definition.icon || ""];
+  const slots = Array.from({ length: 8 }, (_, index) => effects[index % effects.length] || "");
+  elements.petMotionLayer.innerHTML = slots.map((effect, index) => `<i style="--i:${index}">${escapeHtml(effect)}</i>`).join("");
 }
 
 function unlockOrEquipPetItem(type, itemId) {
@@ -1692,15 +1766,22 @@ function triggerPetAction(actionId, message = "", delta = {}) {
   const motion = definition.motion || definition.id;
   if (motion !== "sleep") profile.pet.sleeping = false;
   updatePet({ ...(definition.delta || {}), ...delta }, message || definition.message || "");
+  renderPetMotionEffects(definition);
   if (elements.petAvatar) {
     const actionClasses = petActionDefs.map((item) => `action-${item.motion || item.id}`).concat(["action-pat", "action-play", "action-focus", "action-change", "actioning"]);
     elements.petAvatar.classList.remove(...new Set(actionClasses));
+    elements.petAvatar.dataset.motion = motion;
     elements.petAvatar.dataset.effect = definition.icon || "";
     void elements.petAvatar.offsetWidth;
     elements.petAvatar.classList.add("actioning", `action-${motion}`);
+    playPetFrameSequence(motion, definition.duration || 1200);
     window.setTimeout(() => {
       elements.petAvatar?.classList.remove("actioning", `action-${motion}`);
-      if (elements.petAvatar) elements.petAvatar.dataset.effect = "";
+      if (elements.petAvatar) {
+        elements.petAvatar.dataset.effect = "";
+        elements.petAvatar.dataset.motion = "";
+      }
+      if (elements.petMotionLayer) elements.petMotionLayer.innerHTML = "";
     }, definition.duration || 1200);
   }
 }
@@ -1718,16 +1799,13 @@ function randomPetIdleTalk() {
 
 function rewardPetForWord(word) {
   profile.pet.sleeping = false;
-  updatePet({ health: 6, mood: 4, energy: 1, exp: 5 }, `记住 ${word} 了，我恢复了一点状态，也获得了 1 精力。`);
-  elements.petAvatar.dataset.effect = "✓";
-  elements.petAvatar.classList.add("actioning");
-  elements.petAvatar.classList.remove("celebrate");
-  void elements.petAvatar.offsetWidth;
-  elements.petAvatar.classList.add("celebrate");
-  window.setTimeout(() => {
-    elements.petAvatar?.classList.remove("actioning");
-    if (elements.petAvatar) elements.petAvatar.dataset.effect = "";
-  }, 900);
+  triggerPetAction("celebrate", `记住 ${word} 了，我恢复了一点状态，也获得了 1 精力。`, {
+    health: 6,
+    mood: 4,
+    energy: 1,
+    exp: 5
+  });
+  return;
 }
 
 function nudgePetForMistake() {
