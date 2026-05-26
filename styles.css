@@ -1995,7 +1995,7 @@ dialog::backdrop {
   left: 50%;
   bottom: -2px;
   z-index: 5;
-  display: none;
+  display: block;
   width: 176px;
   height: 214px;
   transform: translateX(-50%);
@@ -2004,11 +2004,40 @@ dialog::backdrop {
   animation: rigIdleBody 4s ease-in-out infinite;
 }
 
-.pet-character {
-  opacity: 1;
-  visibility: visible;
+.pet-avatar > .pet-character {
+  opacity: 0;
+  visibility: hidden;
   width: 194px;
   animation: petFloat 3.8s ease-in-out infinite;
+}
+
+.pet-live2d::before,
+.pet-live2d::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.pet-live2d::before {
+  bottom: 8px;
+  z-index: 3;
+  width: 54px;
+  height: 25px;
+  border-left: 8px solid var(--pet-socks, #fff);
+  border-right: 8px solid var(--pet-socks, #fff);
+  border-radius: 0 0 16px 16px;
+}
+
+.pet-live2d::after {
+  bottom: 2px;
+  z-index: 6;
+  width: 72px;
+  height: 13px;
+  border: 3px solid var(--pet-line);
+  border-radius: 999px;
+  background: var(--pet-shoes, #fff);
 }
 
 .pet-avatar[data-suit="mint"] .pet-live2d {
@@ -2034,6 +2063,52 @@ dialog::backdrop {
   --pet-shirt: #f7fbff;
   --pet-skirt: #6141bd;
 }
+
+.pet-avatar[data-upper="upper_sailor"] .pet-live2d {
+  --pet-jacket: #9bd4ff;
+  --pet-shirt: #f7fbff;
+}
+
+.pet-avatar[data-upper="upper_hoodie"] .pet-live2d {
+  --pet-jacket: #43c6ac;
+  --pet-shirt: #f3fffb;
+}
+
+.pet-avatar[data-upper="upper_cardigan"] .pet-live2d {
+  --pet-jacket: #f39ac0;
+  --pet-shirt: #fff7fb;
+}
+
+.pet-avatar[data-upper="upper_blazer"] .pet-live2d {
+  --pet-jacket: #557aa6;
+  --pet-shirt: #f3f7ff;
+}
+
+.pet-avatar[data-upper="upper_hanfu"] .pet-live2d {
+  --pet-jacket: #70b783;
+  --pet-shirt: #f8fff2;
+}
+
+.pet-avatar[data-upper="upper_idol"] .pet-live2d {
+  --pet-jacket: #ff72d0;
+  --pet-shirt: #f7fbff;
+}
+
+.pet-avatar[data-lower="lower_skirt"] .pet-live2d { --pet-skirt: #5e9bd8; }
+.pet-avatar[data-lower="lower_shorts"] .pet-live2d { --pet-skirt: #f3a536; }
+.pet-avatar[data-lower="lower_trousers"] .pet-live2d { --pet-skirt: #60748e; }
+.pet-avatar[data-lower="lower_longskirt"] .pet-live2d { --pet-skirt: #886de0; }
+.pet-avatar[data-lower="lower_tech"] .pet-live2d { --pet-skirt: #263246; }
+
+.pet-avatar[data-socks="socks_white"] .pet-live2d { --pet-socks: #fff; }
+.pet-avatar[data-socks="socks_knee"] .pet-live2d { --pet-socks: #93caed; }
+.pet-avatar[data-socks="socks_ribbon"] .pet-live2d { --pet-socks: #f49ac1; }
+.pet-avatar[data-socks="socks_star"] .pet-live2d { --pet-socks: #7adfff; }
+
+.pet-avatar[data-shoes="shoes_canvas"] .pet-live2d { --pet-shoes: #fff; }
+.pet-avatar[data-shoes="shoes_loafers"] .pet-live2d { --pet-shoes: #8b5a35; }
+.pet-avatar[data-shoes="shoes_boots"] .pet-live2d { --pet-shoes: #1d2530; }
+.pet-avatar[data-shoes="shoes_neon"] .pet-live2d { --pet-shoes: linear-gradient(135deg, #fff, #57d8ff, #ff6bd6); }
 
 .pet-avatar.skin-rainbow .pet-live2d {
   --pet-hair: #73d7ff;
@@ -2490,6 +2565,24 @@ dialog::backdrop {
   animation: rigActionBase 0.5s ease both;
 }
 
+.pet-avatar.action-linking .pet-live2d {
+  animation: rigActionLink 0.14s ease both !important;
+}
+
+.pet-avatar.action-linking .pet-arm-live.left {
+  animation: rigLinkLeftArm 0.14s ease both !important;
+}
+
+.pet-avatar.action-linking .pet-arm-live.right {
+  animation: rigLinkRightArm 0.14s ease both !important;
+}
+
+.pet-avatar.actioning .pet-live2d,
+.pet-avatar.actioning .pet-part {
+  animation-duration: var(--pet-action-duration, 1500ms) !important;
+  animation-fill-mode: both;
+}
+
 .pet-avatar.action-wave .pet-arm-live.right { animation: rigWaveArm 1.5s ease-in-out both; }
 .pet-avatar.action-wave .pet-head-live { animation: rigWaveHead 1.5s ease both; }
 .pet-avatar.action-wave .pet-mouth-live { animation: rigSmile 1.5s ease both; }
@@ -2574,6 +2667,10 @@ dialog::backdrop {
 .pet-avatar.action-surprise .pet-arm-live.right { animation: rigSurpriseRight 1.5s ease both; }
 .pet-avatar.action-surprise .pet-mouth-live { animation: rigSurpriseMouth 1.5s ease both; }
 .pet-avatar.action-surprise .pet-head-live { animation: rigSurpriseHead 1.5s ease both; }
+
+.pet-avatar.has-art .pet-outfit {
+  display: none !important;
+}
 
 .pet-avatar .pet-character + .pet-hair-back ~ .pet-face {
   display: none;
@@ -3153,6 +3250,8 @@ dialog::backdrop {
   animation-duration: 1.8s;
   animation-timing-function: cubic-bezier(0.22, 0.84, 0.28, 1);
   animation-iteration-count: infinite;
+  opacity: 0;
+  visibility: hidden;
 }
 
 .action-preview[data-motion="wave"] img { animation-name: petActWave; }
@@ -3252,6 +3351,81 @@ dialog::backdrop {
 .action-preview .mini-arm.right {
   right: 10px;
   transform: rotate(-24deg);
+}
+
+.action-preview .mini-joint {
+  position: absolute;
+  top: 23px;
+  z-index: 4;
+  width: 7px;
+  height: 7px;
+  border: 2px solid #263249;
+  border-radius: 50%;
+  background: #ffd8c7;
+}
+
+.action-preview .mini-joint.shoulder-left {
+  left: 14px;
+}
+
+.action-preview .mini-joint.shoulder-right {
+  right: 14px;
+}
+
+.action-preview .mini-head,
+.action-preview .mini-body,
+.action-preview .mini-arm,
+.action-preview .mini-joint {
+  animation-duration: 1.55s;
+  animation-timing-function: cubic-bezier(0.22, 0.84, 0.28, 1);
+  animation-iteration-count: infinite;
+}
+
+.action-preview[data-motion="wave"] .mini-arm.right,
+.action-preview[data-motion="cheer"] .mini-arm.right,
+.action-preview[data-motion="celebrate"] .mini-arm.right,
+.action-preview[data-motion="happy"] .mini-arm.right {
+  animation-name: miniRigWaveRight;
+}
+
+.action-preview[data-motion="cheer"] .mini-arm.left,
+.action-preview[data-motion="celebrate"] .mini-arm.left,
+.action-preview[data-motion="stretch"] .mini-arm.left,
+.action-preview[data-motion="happy"] .mini-arm.left {
+  animation-name: miniRigWaveLeft;
+}
+
+.action-preview[data-motion="eat"] .mini-arm.right,
+.action-preview[data-motion="drink"] .mini-arm.right,
+.action-preview[data-motion="relax"] .mini-arm.right {
+  animation-name: miniRigPropHand;
+}
+
+.action-preview[data-motion="think"] .mini-arm.right,
+.action-preview[data-motion="shy"] .mini-arm.right {
+  animation-name: miniRigFaceHand;
+}
+
+.action-preview[data-motion="hungry"] .mini-arm.left,
+.action-preview[data-motion="hungry"] .mini-arm.right {
+  animation-name: miniRigBellyHand;
+}
+
+.action-preview[data-motion="sleepy"] .mini-head,
+.action-preview[data-motion="think"] .mini-head,
+.action-preview[data-motion="confused"] .mini-head,
+.action-preview[data-motion="surprise"] .mini-head {
+  animation-name: miniRigHeadAct;
+}
+
+.action-preview[data-motion="music"] .mini-body,
+.action-preview[data-motion="exercise"] .mini-body,
+.action-preview[data-motion="sparkle"] .mini-body {
+  animation-name: miniRigBodyGroove;
+}
+
+.action-preview[data-motion="angry"] .mini-body {
+  animation-name: miniRigStomp;
 }
 
 .action-preview[data-motion="wave"] .mini-arm.right,
@@ -3987,6 +4161,52 @@ dialog::backdrop {
   100% { opacity: 0; transform: translateY(-40px) scale(0.82) rotate(16deg); }
 }
 
+@keyframes miniRigWaveRight {
+  0%, 100% { transform: rotate(-24deg); }
+  18% { transform: translate(-7px, -16px) rotate(-120deg); }
+  40% { transform: translate(-8px, -18px) rotate(-66deg); }
+  62% { transform: translate(-7px, -16px) rotate(-128deg); }
+  82% { transform: translate(-6px, -12px) rotate(-78deg); }
+}
+
+@keyframes miniRigWaveLeft {
+  0%, 100% { transform: rotate(24deg); }
+  35%, 74% { transform: translate(7px, -17px) rotate(128deg); }
+}
+
+@keyframes miniRigPropHand {
+  0%, 100% { transform: rotate(-24deg); }
+  35%, 72% { transform: translate(-8px, -9px) rotate(-72deg); }
+}
+
+@keyframes miniRigFaceHand {
+  0%, 100% { transform: rotate(-24deg); }
+  42%, 78% { transform: translate(-8px, -16px) rotate(-104deg); }
+}
+
+@keyframes miniRigBellyHand {
+  0%, 100% { transform: rotate(24deg); }
+  45%, 76% { transform: translate(8px, 4px) rotate(78deg); }
+}
+
+@keyframes miniRigHeadAct {
+  0%, 100% { transform: rotate(0) translateY(0); }
+  35% { transform: rotate(-8deg) translateY(2px); }
+  68% { transform: rotate(7deg) translateY(-2px); }
+}
+
+@keyframes miniRigBodyGroove {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  30% { transform: translateY(-5px) rotate(-5deg); }
+  62% { transform: translateY(-2px) rotate(5deg); }
+}
+
+@keyframes miniRigStomp {
+  0%, 100% { transform: translateY(0); }
+  20%, 60% { transform: translateY(4px); }
+  40%, 80% { transform: translateY(-3px); }
+}
+
 @keyframes rigIdleBody {
   0%, 100% { transform: translateX(-50%) translateY(0); }
   50% { transform: translateX(-50%) translateY(-4px); }
@@ -4030,6 +4250,22 @@ dialog::backdrop {
 @keyframes rigActionBase {
   0%, 100% { transform: translateX(-50%) translateY(0); }
   45% { transform: translateX(-50%) translateY(-4px); }
+}
+
+@keyframes rigActionLink {
+  0% { transform: translateX(-50%) translateY(0) scale(1); }
+  45% { transform: translateX(-50%) translateY(3px) scale(0.98, 1.02); }
+  100% { transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+@keyframes rigLinkLeftArm {
+  0% { transform: rotate(22deg); }
+  100% { transform: rotate(12deg); }
+}
+
+@keyframes rigLinkRightArm {
+  0% { transform: rotate(-22deg); }
+  100% { transform: rotate(-12deg); }
 }
 
 @keyframes rigWaveArm {

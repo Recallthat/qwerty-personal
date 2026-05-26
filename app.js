@@ -1908,6 +1908,12 @@ function applyPetLook(options = {}) {
   stopPetFrameSequence(false);
   stopPetAnimeAction(false);
   setPetAvatarLookClass(skin, suit, options.preserveAction !== false);
+  if (elements.petAvatar) {
+    elements.petAvatar.dataset.upper = outfit.upper || "";
+    elements.petAvatar.dataset.lower = outfit.lower || "";
+    elements.petAvatar.dataset.socks = outfit.socks || "";
+    elements.petAvatar.dataset.shoes = outfit.shoes || "";
+  }
   if (transitionKind && transitionKind !== "suit") markPetLookChanging(transitionKind);
   setPetCharacterImage(getPetIdleImage(), suit.name, transitionKind === "suit");
   [
@@ -1980,6 +1986,12 @@ function renderPetActions() {
     <button type="button" data-pet-action="${action.id}" data-motion="${action.motion || action.id}" title="${escapeHtml(action.message || action.label)}">
       <span class="action-preview" data-motion="${action.motion || action.id}" data-suit="${suit.id}" data-skin="${skin.id}">
         <img src="${suit.image}" alt="${escapeHtml(suit.name)}" loading="lazy" />
+        <i class="mini-body"></i>
+        <i class="mini-head"></i>
+        <i class="mini-arm left"></i>
+        <i class="mini-arm right"></i>
+        <i class="mini-joint shoulder-left"></i>
+        <i class="mini-joint shoulder-right"></i>
       </span>
       <strong>${action.label}</strong>
       <em>${petActionHints[action.id] || "点击触发"}</em>
@@ -2189,30 +2201,40 @@ function triggerPetAction(actionId, message = "", delta = {}) {
   const duration = definition.duration || 1200;
   if (motion !== "sleep") profile.pet.sleeping = false;
   updatePet({ ...(definition.delta || {}), ...delta }, message || definition.message || "");
-  renderPetMotionEffects(definition);
   if (elements.petAvatar) {
     const token = ++petActionToken;
     const actionClasses = petActionDefs.map((item) => `action-${item.motion || item.id}`).concat(["action-pat", "action-play", "action-focus", "action-change", "actioning"]);
-    elements.petAvatar.classList.remove(...new Set(actionClasses));
-    elements.petAvatar.dataset.motion = motion;
-    elements.petAvatar.dataset.effect = definition.icon || "";
-    elements.petAvatar.style.setProperty("--pet-action-duration", `${duration}ms`);
-    stopPetFrameSequence(false);
-    stopPetAnimeAction(false);
-    setPetCharacterImage(getPetIdleImage(), getActivePetSuit().name, false);
-    void elements.petAvatar.offsetWidth;
-    elements.petAvatar.classList.add("actioning", `action-${motion}`);
+    const wasActioning = elements.petAvatar.classList.contains("actioning");
+    elements.petAvatar.classList.add("action-linking");
+    const startMotion = () => {
+      if (token !== petActionToken || !elements.petAvatar) return;
+      renderPetMotionEffects(definition);
+      elements.petAvatar.classList.remove(...new Set(actionClasses));
+      elements.petAvatar.classList.remove("action-linking");
+      elements.petAvatar.dataset.motion = motion;
+      elements.petAvatar.dataset.effect = definition.icon || "";
+      elements.petAvatar.style.setProperty("--pet-action-duration", `${duration}ms`);
+      stopPetFrameSequence(false);
+      stopPetAnimeAction(false);
+      setPetCharacterImage(getPetIdleImage(), getActivePetSuit().name, false);
+      void elements.petAvatar.offsetWidth;
+      elements.petAvatar.classList.add("actioning", `action-${motion}`);
+      window.setTimeout(() => {
+        if (token !== petActionToken) return;
+        elements.petAvatar?.classList.remove("actioning", `action-${motion}`);
+        if (elements.petAvatar) {
+          elements.petAvatar.dataset.effect = "";
+          elements.petAvatar.dataset.motion = "";
+          elements.petAvatar.style.removeProperty("--pet-action-duration");
+        }
+        if (elements.petMotionLayer) elements.petMotionLayer.innerHTML = "";
+        applyPetLook({ preserveAction: false });
+      }, duration);
+    };
+    window.setTimeout(startMotion, wasActioning ? 140 : 80);
     window.setTimeout(() => {
-      if (token !== petActionToken) return;
-      elements.petAvatar?.classList.remove("actioning", `action-${motion}`);
-      if (elements.petAvatar) {
-        elements.petAvatar.dataset.effect = "";
-        elements.petAvatar.dataset.motion = "";
-        elements.petAvatar.style.removeProperty("--pet-action-duration");
-      }
-      if (elements.petMotionLayer) elements.petMotionLayer.innerHTML = "";
-      applyPetLook({ preserveAction: false });
-    }, duration);
+      if (token === petActionToken) elements.petAvatar?.classList.remove("action-linking");
+    }, duration + 260);
   }
 }
 
