@@ -309,8 +309,17 @@
               视觉主题
               <select id="themeSetting">
                 <option value="light">清爽白</option>
-                <option value="ink">深色墨</option>
+                <option value="mint">青柚薄荷</option>
+                <option value="sky">海盐蓝</option>
+                <option value="sakura">樱粉晨光</option>
+                <option value="citrus">柠檬气泡</option>
+                <option value="lavender">紫藤晚风</option>
+                <option value="candy">彩糖晴空</option>
+                <option value="aurora">极光薄荷</option>
+                <option value="latte">午后茶会</option>
+                <option value="idol">星辉舞台</option>
                 <option value="green">护眼绿</option>
+                <option value="ink">深色墨</option>
               </select>
             </label>
             <label>
@@ -428,7 +437,7 @@
       <div class="pet-card" id="petCard">
         <div class="pet-head">
           <div>
-            <strong id="petName">Mimo</strong>
+            <strong id="petName">青柚</strong>
             <span id="petMoodLabel">待机中</span>
           </div>
           <button class="icon-button pet-minimize" id="petMinimizeButton" type="button" title="收起桌宠">−</button>
@@ -436,6 +445,10 @@
         <button class="pet-avatar" id="petAvatar" type="button" title="摸摸它">
           <span class="pet-ear left"></span>
           <span class="pet-ear right"></span>
+          <span class="pet-outfit upper" id="petUpperLayer"></span>
+          <span class="pet-outfit lower" id="petLowerLayer"></span>
+          <span class="pet-outfit socks" id="petSocksLayer"></span>
+          <span class="pet-outfit shoes" id="petShoesLayer"></span>
           <span class="pet-face" id="petFace">•ᴗ•</span>
         </button>
         <div class="pet-bars">
@@ -450,9 +463,11 @@
         </div>
         <details class="pet-shop" id="petShop">
           <summary>
-            <span>皮肤商店</span>
+            <span>装扮商店</span>
             <strong id="petEnergyWallet">60 精力</strong>
           </summary>
+          <div class="pet-shop-tabs" id="petShopTabs"></div>
+          <p class="pet-shop-hint" id="petShopHint">左键解锁/穿戴，右键预览。</p>
           <div class="skin-grid" id="petSkinGrid"></div>
         </details>
         <div class="pet-progress">
