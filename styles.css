@@ -1259,6 +1259,10 @@ dialog::backdrop {
   border-radius: 8px;
   background: color-mix(in srgb, var(--panel) 92%, var(--accent) 8%);
   box-shadow: var(--shadow);
+  max-height: min(760px, calc(100vh - 76px));
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 
 .pet-head,
@@ -1809,6 +1813,597 @@ dialog::backdrop {
   animation: petSleep 2.4s ease-in-out infinite;
 }
 
+.pet-live2d {
+  --pet-hair: #6fa2f5;
+  --pet-hair-deep: #3b64be;
+  --pet-eye: #4a8869;
+  --pet-skin: #ffd8c7;
+  --pet-line: #202a3d;
+  --pet-jacket: #d66f86;
+  --pet-shirt: #fff8f5;
+  --pet-skirt: #56658b;
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  z-index: 5;
+  display: block;
+  width: 176px;
+  height: 214px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  filter: drop-shadow(0 16px 20px rgba(24, 39, 69, 0.18));
+  animation: rigIdleBody 4s ease-in-out infinite;
+}
+
+.pet-character {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.pet-avatar[data-suit="mint"] .pet-live2d {
+  --pet-jacket: #65d7bf;
+  --pet-shirt: #f3fffb;
+  --pet-skirt: #4e9d8d;
+}
+
+.pet-avatar[data-suit="school"] .pet-live2d {
+  --pet-jacket: #3c5f9d;
+  --pet-shirt: #fff7ed;
+  --pet-skirt: #293a62;
+}
+
+.pet-avatar[data-suit="tea"] .pet-live2d {
+  --pet-jacket: #c89c72;
+  --pet-shirt: #fff8ed;
+  --pet-skirt: #805c48;
+}
+
+.pet-avatar[data-suit="idol"] .pet-live2d {
+  --pet-jacket: #f06dcc;
+  --pet-shirt: #f7fbff;
+  --pet-skirt: #6141bd;
+}
+
+.pet-avatar.skin-rainbow .pet-live2d {
+  --pet-hair: #73d7ff;
+  --pet-hair-deep: #a56dff;
+  --pet-eye: #1fb980;
+  filter: drop-shadow(0 0 18px rgba(111, 155, 255, 0.32));
+}
+
+.pet-avatar.skin-neon .pet-live2d {
+  --pet-hair: #5eead4;
+  --pet-hair-deep: #2563eb;
+  --pet-eye: #00d5ff;
+  filter: drop-shadow(0 0 20px rgba(34, 211, 238, 0.45));
+}
+
+.pet-avatar.skin-cat-moe .pet-live2d,
+.pet-avatar.skin-cat-grace .pet-live2d,
+.pet-avatar.skin-cat-queen .pet-live2d {
+  --pet-hair: #80a9ff;
+  --pet-hair-deep: #5f64c7;
+}
+
+.pet-avatar.skin-sunny-boy .pet-live2d {
+  --pet-hair: #8fc7ff;
+  --pet-hair-deep: #4f83c7;
+  --pet-eye: #f59e0b;
+}
+
+.pet-avatar.skin-cool-prince .pet-live2d {
+  --pet-hair: #9bd8ff;
+  --pet-hair-deep: #4169a8;
+  --pet-eye: #2d88c8;
+}
+
+.pet-avatar.skin-star-idol .pet-live2d {
+  --pet-hair: #8cd7ff;
+  --pet-hair-deep: #7a5cff;
+  --pet-eye: #ff72ce;
+  filter: drop-shadow(0 0 22px rgba(255, 78, 205, 0.36));
+}
+
+.pet-part {
+  position: absolute;
+  display: block;
+  box-sizing: border-box;
+  transform-style: preserve-3d;
+}
+
+.pet-shadow-live {
+  left: 28px;
+  bottom: 1px;
+  z-index: 0;
+  width: 118px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(24, 39, 69, 0.2), transparent 70%);
+  animation: rigShadow 4s ease-in-out infinite;
+}
+
+.pet-hair-back-live {
+  left: 25px;
+  top: 8px;
+  z-index: 1;
+  width: 126px;
+  height: 148px;
+  border: 3px solid var(--pet-line);
+  border-radius: 62px 64px 44px 44px;
+  background:
+    linear-gradient(110deg, transparent 0 17%, rgba(255, 255, 255, 0.36) 18% 31%, transparent 32% 100%),
+    linear-gradient(155deg, var(--pet-hair), var(--pet-hair-deep));
+  box-shadow: inset -12px -18px 0 rgba(0, 0, 0, 0.08);
+  animation: rigHairBack 3.2s ease-in-out infinite;
+}
+
+.pet-body-live {
+  left: 42px;
+  bottom: 18px;
+  z-index: 4;
+  width: 92px;
+  height: 82px;
+  border: 3px solid var(--pet-line);
+  border-radius: 34px 34px 22px 22px;
+  background:
+    linear-gradient(90deg, transparent 0 41%, color-mix(in srgb, var(--pet-shirt) 90%, white) 42% 58%, transparent 59%),
+    linear-gradient(180deg, var(--pet-jacket) 0 64%, var(--pet-skirt) 65% 100%);
+  transform-origin: 50% 100%;
+  animation: rigTorsoIdle 4s ease-in-out infinite;
+}
+
+.pet-body-live::before,
+.pet-body-live::after {
+  content: "";
+  position: absolute;
+  top: 18px;
+  width: 20px;
+  height: 44px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.pet-body-live::before {
+  left: 14px;
+}
+
+.pet-body-live::after {
+  right: 14px;
+}
+
+.pet-neck-live {
+  left: 76px;
+  top: 105px;
+  z-index: 4;
+  width: 24px;
+  height: 28px;
+  border: 3px solid var(--pet-line);
+  border-radius: 0 0 12px 12px;
+  background: var(--pet-skin);
+}
+
+.pet-head-live {
+  left: 38px;
+  top: 38px;
+  z-index: 7;
+  width: 100px;
+  height: 84px;
+  border: 3px solid var(--pet-line);
+  border-radius: 46% 46% 48% 48%;
+  background:
+    radial-gradient(circle at 25% 74%, rgba(255, 132, 154, 0.22) 0 8px, transparent 9px),
+    radial-gradient(circle at 75% 74%, rgba(255, 132, 154, 0.18) 0 7px, transparent 8px),
+    var(--pet-skin);
+  transform-origin: 50% 86%;
+  animation: rigHeadIdle 4s ease-in-out infinite;
+}
+
+.pet-ear-live {
+  top: 28px;
+  z-index: -1;
+  width: 16px;
+  height: 24px;
+  border: 3px solid var(--pet-line);
+  border-radius: 50%;
+  background: var(--pet-skin);
+}
+
+.pet-ear-live.left {
+  left: -10px;
+}
+
+.pet-ear-live.right {
+  right: -10px;
+}
+
+.pet-face-live {
+  inset: 0;
+  z-index: 5;
+}
+
+.pet-eye-live {
+  top: 36px;
+  width: 21px;
+  height: 25px;
+  border: 3px solid var(--pet-line);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 26%, #fff 0 4px, transparent 5px),
+    radial-gradient(circle at 56% 62%, color-mix(in srgb, var(--pet-eye) 55%, white) 0 6px, transparent 7px),
+    var(--pet-eye);
+  animation: rigBlink 5.6s infinite;
+}
+
+.pet-eye-live::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 7px;
+  width: 8px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(20, 28, 42, 0.48);
+}
+
+.pet-eye-live.left {
+  left: 25px;
+}
+
+.pet-eye-live.right {
+  right: 25px;
+}
+
+.pet-glasses-live {
+  left: 20px;
+  top: 33px;
+  z-index: 8;
+  width: 60px;
+  height: 29px;
+  border-left: 3px solid var(--pet-line);
+  border-right: 3px solid var(--pet-line);
+}
+
+.pet-glasses-live::before,
+.pet-glasses-live::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 25px;
+  height: 25px;
+  border: 3px solid var(--pet-line);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.pet-glasses-live::before {
+  left: -4px;
+}
+
+.pet-glasses-live::after {
+  right: -4px;
+}
+
+.pet-mouth-live {
+  left: 43px;
+  top: 66px;
+  width: 15px;
+  height: 8px;
+  border-bottom: 3px solid var(--pet-line);
+  border-radius: 0 0 18px 18px;
+  transform-origin: 50% 0;
+}
+
+.pet-blush-live {
+  top: 60px;
+  width: 16px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 116, 146, 0.28);
+  opacity: 0.62;
+}
+
+.pet-blush-live.left {
+  left: 17px;
+}
+
+.pet-blush-live.right {
+  right: 17px;
+}
+
+.pet-bang-live {
+  top: -8px;
+  z-index: 9;
+  width: 22px;
+  height: 46px;
+  border: 3px solid var(--pet-line);
+  border-top: 0;
+  border-radius: 8px 8px 20px 20px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--pet-hair) 88%, white), var(--pet-hair-deep));
+  transform-origin: 50% 4px;
+  animation: rigBang 3.4s ease-in-out infinite;
+}
+
+.pet-bang-live.bang-a {
+  left: 20px;
+  transform: rotate(18deg);
+}
+
+.pet-bang-live.bang-b {
+  left: 42px;
+  height: 52px;
+  transform: rotate(4deg);
+}
+
+.pet-bang-live.bang-c {
+  right: 22px;
+  transform: rotate(-16deg);
+}
+
+.pet-hair-side-live {
+  top: 3px;
+  z-index: 4;
+  width: 40px;
+  height: 122px;
+  border: 3px solid var(--pet-line);
+  border-top: 0;
+  background: linear-gradient(160deg, var(--pet-hair), var(--pet-hair-deep));
+  transform-origin: 50% 10%;
+  animation: rigSideHair 3.8s ease-in-out infinite;
+}
+
+.pet-hair-side-live.left {
+  left: -7px;
+  border-radius: 18px 8px 26px 28px;
+  transform: rotate(7deg);
+}
+
+.pet-hair-side-live.right {
+  right: -6px;
+  border-radius: 8px 18px 28px 26px;
+  transform: rotate(-7deg);
+}
+
+.pet-arm-live {
+  top: 116px;
+  z-index: 8;
+  width: 24px;
+  height: 72px;
+  border: 3px solid var(--pet-line);
+  border-radius: 16px;
+  background: var(--pet-jacket);
+  transform-origin: 50% 10%;
+}
+
+.pet-arm-live span {
+  position: absolute;
+  left: 50%;
+  bottom: -15px;
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--pet-line);
+  border-radius: 50%;
+  background: var(--pet-skin);
+  transform: translateX(-50%);
+}
+
+.pet-arm-live.left {
+  left: 34px;
+  transform: rotate(22deg);
+}
+
+.pet-arm-live.right {
+  right: 34px;
+  transform: rotate(-22deg);
+}
+
+.pet-prop-live {
+  z-index: 10;
+  opacity: 0;
+  transform-origin: 50% 80%;
+}
+
+.pet-prop-live.book {
+  left: 55px;
+  top: 133px;
+  width: 66px;
+  height: 48px;
+  border: 3px solid var(--pet-line);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,0.7) 0 48%, transparent 49% 51%, rgba(255,255,255,0.7) 52%),
+    linear-gradient(145deg, #9fd6ff, #fff);
+}
+
+.pet-prop-live.food {
+  right: 22px;
+  top: 126px;
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--pet-line);
+  border-radius: 50% 50% 45% 45%;
+  background:
+    radial-gradient(circle at 50% 35%, #fff 0 8px, transparent 9px),
+    #f7b267;
+}
+
+.pet-prop-live.cup {
+  right: 22px;
+  top: 128px;
+  width: 30px;
+  height: 34px;
+  border: 3px solid var(--pet-line);
+  border-radius: 8px 8px 12px 12px;
+  background: linear-gradient(180deg, #f9fbff, #9bd8ff);
+}
+
+.pet-prop-live.note {
+  right: 18px;
+  top: 40px;
+  width: 26px;
+  height: 38px;
+  color: var(--pet-eye);
+}
+
+.pet-prop-live.note::before,
+.pet-prop-live.note::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.pet-prop-live.note::before {
+  left: 0;
+  bottom: 0;
+  width: 14px;
+  height: 11px;
+}
+
+.pet-prop-live.note::after {
+  left: 11px;
+  top: 0;
+  width: 5px;
+  height: 30px;
+  border-radius: 4px;
+}
+
+.pet-prop-live.sparkle {
+  left: 16px;
+  top: 34px;
+  width: 144px;
+  height: 134px;
+}
+
+.pet-prop-live.sparkle::before,
+.pet-prop-live.sparkle::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: #ffd166;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+}
+
+.pet-prop-live.sparkle::before {
+  left: 6px;
+  top: 20px;
+}
+
+.pet-prop-live.sparkle::after {
+  right: 4px;
+  bottom: 10px;
+}
+
+.pet-prop-live.thought {
+  right: 4px;
+  top: 22px;
+  width: 50px;
+  height: 31px;
+  border: 3px solid var(--pet-line);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.94);
+}
+
+.pet-prop-live.thought::after {
+  content: "?";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--pet-line);
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.pet-avatar.actioning .pet-live2d {
+  animation: rigActionBase 0.5s ease both;
+}
+
+.pet-avatar.action-wave .pet-arm-live.right { animation: rigWaveArm 1.5s ease-in-out both; }
+.pet-avatar.action-wave .pet-head-live { animation: rigWaveHead 1.5s ease both; }
+.pet-avatar.action-wave .pet-mouth-live { animation: rigSmile 1.5s ease both; }
+
+.pet-avatar.action-hungry .pet-arm-live.left { animation: rigBellyHand 1.7s ease both; }
+.pet-avatar.action-hungry .pet-arm-live.right { animation: rigBellyHandRight 1.7s ease both; }
+.pet-avatar.action-hungry .pet-head-live { animation: rigHungryHead 1.7s ease both; }
+.pet-avatar.action-hungry .pet-mouth-live { animation: rigTinyMouth 1.7s ease both; }
+.pet-avatar.action-hungry .pet-prop-live.thought { opacity: 1; animation: rigFloatProp 1.7s ease both; }
+
+.pet-avatar.action-eat .pet-prop-live.food { opacity: 1; animation: rigFoodBite 1.5s ease both; }
+.pet-avatar.action-eat .pet-arm-live.right { animation: rigEatArm 1.5s ease both; }
+.pet-avatar.action-eat .pet-mouth-live { animation: rigChew 1.5s steps(4) both; }
+
+.pet-avatar.action-drink .pet-prop-live.cup { opacity: 1; animation: rigCupDrink 1.5s ease both; }
+.pet-avatar.action-drink .pet-arm-live.right { animation: rigDrinkArm 1.5s ease both; }
+.pet-avatar.action-drink .pet-head-live { animation: rigDrinkHead 1.5s ease both; }
+
+.pet-avatar.action-sleepy .pet-eye-live { animation: rigSleepEyes 1.8s ease both; }
+.pet-avatar.action-sleepy .pet-head-live { animation: rigSleepHead 1.8s ease both; }
+.pet-avatar.action-sleepy .pet-mouth-live { animation: rigYawn 1.8s ease both; }
+
+.pet-avatar.action-stretch .pet-arm-live.left { animation: rigStretchLeft 1.6s ease both; }
+.pet-avatar.action-stretch .pet-arm-live.right,
+.pet-avatar.action-exercise .pet-arm-live.right { animation: rigStretchRight 1.6s ease both; }
+.pet-avatar.action-stretch .pet-body-live { animation: rigStretchBody 1.6s ease both; }
+
+.pet-avatar.action-focus .pet-prop-live.book,
+.pet-avatar.action-review .pet-prop-live.book { opacity: 1; animation: rigBookOpen 1.7s ease both; }
+.pet-avatar.action-focus .pet-head-live,
+.pet-avatar.action-review .pet-head-live { animation: rigReadHead 1.7s ease both; }
+.pet-avatar.action-focus .pet-arm-live.left,
+.pet-avatar.action-review .pet-arm-live.left { animation: rigHoldBookLeft 1.7s ease both; }
+.pet-avatar.action-focus .pet-arm-live.right,
+.pet-avatar.action-review .pet-arm-live.right { animation: rigHoldBookRight 1.7s ease both; }
+
+.pet-avatar.action-think .pet-head-live { animation: rigThinkHead 1.8s ease both; }
+.pet-avatar.action-think .pet-arm-live.right { animation: rigThinkHand 1.8s ease both; }
+.pet-avatar.action-think .pet-prop-live.thought { opacity: 1; animation: rigThinkBubble 1.8s ease both; }
+
+.pet-avatar.action-confused .pet-head-live { animation: rigConfusedHead 1.5s ease both; }
+.pet-avatar.action-confused .pet-eye-live { animation: rigConfusedEyes 1.5s ease both; }
+.pet-avatar.action-confused .pet-prop-live.thought { opacity: 1; animation: rigQuestionShake 1.5s ease both; }
+
+.pet-avatar.action-cheer .pet-arm-live.left,
+.pet-avatar.action-celebrate .pet-arm-live.left,
+.pet-avatar.action-happy .pet-arm-live.left { animation: rigCheerLeft 1.5s ease both; }
+.pet-avatar.action-cheer .pet-arm-live.right,
+.pet-avatar.action-celebrate .pet-arm-live.right,
+.pet-avatar.action-happy .pet-arm-live.right { animation: rigCheerRight 1.5s ease both; }
+.pet-avatar.action-cheer .pet-live2d,
+.pet-avatar.action-happy .pet-live2d { animation: rigHappyJump 1.5s ease both; }
+.pet-avatar.action-celebrate .pet-live2d { animation: rigCelebrateJump 1.7s ease both; }
+.pet-avatar.action-celebrate .pet-prop-live.sparkle,
+.pet-avatar.action-sparkle .pet-prop-live.sparkle,
+.pet-avatar.action-surprise .pet-prop-live.sparkle { opacity: 1; animation: rigSparkleBurst 1.7s ease both; }
+
+.pet-avatar.action-shy .pet-arm-live.left { animation: rigShyLeft 1.5s ease both; }
+.pet-avatar.action-shy .pet-arm-live.right { animation: rigShyRight 1.5s ease both; }
+.pet-avatar.action-shy .pet-blush-live { opacity: 1; animation: rigBlush 1.5s ease both; }
+.pet-avatar.action-shy .pet-head-live { animation: rigShyHead 1.5s ease both; }
+
+.pet-avatar.action-angry .pet-eye-live { animation: rigAngryEyes 1.3s ease both; }
+.pet-avatar.action-angry .pet-head-live { animation: rigAngryHead 1.3s ease both; }
+.pet-avatar.action-angry .pet-body-live { animation: rigStomp 1.3s ease both; }
+
+.pet-avatar.action-music .pet-live2d { animation: rigMusicGroove 1.7s ease both; }
+.pet-avatar.action-music .pet-prop-live.note { opacity: 1; animation: rigMusicNote 1.7s ease both; }
+.pet-avatar.action-music .pet-arm-live.left { animation: rigMusicLeft 1.7s ease both; }
+.pet-avatar.action-music .pet-arm-live.right { animation: rigMusicRight 1.7s ease both; }
+
+.pet-avatar.action-sparkle .pet-live2d { animation: rigSparklePose 1.7s ease both; }
+
+.pet-avatar.action-exercise .pet-arm-live.left { animation: rigExerciseLeft 1.7s ease both; }
+.pet-avatar.action-exercise .pet-live2d { animation: rigExerciseBody 1.7s ease both; }
+
+.pet-avatar.action-relax .pet-prop-live.cup { opacity: 1; animation: rigTeaRelax 1.8s ease both; }
+.pet-avatar.action-relax .pet-arm-live.right { animation: rigRelaxArm 1.8s ease both; }
+.pet-avatar.action-relax .pet-head-live { animation: rigRelaxHead 1.8s ease both; }
+
+.pet-avatar.action-surprise .pet-arm-live.left { animation: rigSurpriseLeft 1.5s ease both; }
+.pet-avatar.action-surprise .pet-arm-live.right { animation: rigSurpriseRight 1.5s ease both; }
+.pet-avatar.action-surprise .pet-mouth-live { animation: rigSurpriseMouth 1.5s ease both; }
+.pet-avatar.action-surprise .pet-head-live { animation: rigSurpriseHead 1.5s ease both; }
+
 .pet-avatar .pet-character + .pet-hair-back ~ .pet-face {
   display: none;
 }
@@ -2251,11 +2846,34 @@ dialog::backdrop {
 }
 
 .pet-action-panel summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 30px;
   cursor: pointer;
   color: var(--text);
   font-size: 13px;
   font-weight: 900;
   list-style: none;
+}
+
+.pet-action-panel summary::after,
+.pet-shop summary::after {
+  content: "+";
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.pet-action-panel[open] summary::after,
+.pet-shop[open] summary::after {
+  content: "-";
 }
 
 .pet-action-panel summary::-webkit-details-marker {
@@ -2264,9 +2882,9 @@ dialog::backdrop {
 
 .pet-action-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
-  max-height: 172px;
+  max-height: 244px;
   margin-top: 8px;
   overflow: auto;
 }
@@ -2274,30 +2892,135 @@ dialog::backdrop {
 .pet-action-grid button {
   display: grid;
   justify-items: center;
-  gap: 3px;
-  min-height: 52px;
-  padding: 6px 4px;
+  gap: 4px;
+  min-height: 92px;
+  padding: 7px 5px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
   color: var(--text);
 }
 
-.pet-action-grid button span {
-  display: grid;
-  place-items: center;
-  min-width: 26px;
-  height: 22px;
-  padding: 0 5px;
+.pet-action-grid button:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.action-preview {
+  position: relative;
+  width: 54px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 10%, var(--panel)), var(--panel));
+  overflow: hidden;
+}
+
+.action-preview i {
+  position: absolute;
+  display: block;
+  box-sizing: border-box;
+}
+
+.action-preview .mini-head {
+  left: 18px;
+  top: 5px;
+  width: 18px;
+  height: 17px;
+  border: 2px solid #263249;
+  border-radius: 50%;
+  background: #ffd8c7;
+}
+
+.action-preview .mini-body {
+  left: 16px;
+  top: 22px;
+  width: 22px;
+  height: 16px;
+  border: 2px solid #263249;
+  border-radius: 8px 8px 4px 4px;
+  background: #d66f86;
+}
+
+.action-preview .mini-arm {
+  top: 23px;
+  width: 8px;
+  height: 18px;
+  border: 2px solid #263249;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 12%, var(--panel));
+  background: #d66f86;
+  transform-origin: 50% 0;
+}
+
+.action-preview .mini-arm.left {
+  left: 10px;
+  transform: rotate(24deg);
+}
+
+.action-preview .mini-arm.right {
+  right: 10px;
+  transform: rotate(-24deg);
+}
+
+.action-preview[data-motion="wave"] .mini-arm.right,
+.action-preview[data-motion="cheer"] .mini-arm.right,
+.action-preview[data-motion="celebrate"] .mini-arm.right {
+  transform: translateY(-11px) rotate(-135deg);
+}
+
+.action-preview[data-motion="cheer"] .mini-arm.left,
+.action-preview[data-motion="celebrate"] .mini-arm.left,
+.action-preview[data-motion="stretch"] .mini-arm.left {
+  transform: translateY(-11px) rotate(135deg);
+}
+
+.action-preview[data-motion="focus"]::after,
+.action-preview[data-motion="review"]::after {
+  content: "";
+  position: absolute;
+  left: 15px;
+  bottom: 3px;
+  width: 24px;
+  height: 13px;
+  border: 2px solid #263249;
+  border-radius: 4px;
+  background: #e9f6ff;
+}
+
+.action-preview[data-motion="eat"]::after,
+.action-preview[data-motion="drink"]::after,
+.action-preview[data-motion="relax"]::after {
+  content: "";
+  position: absolute;
+  right: 7px;
+  top: 13px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #263249;
+  border-radius: 50%;
+  background: #f7b267;
+}
+
+.action-preview[data-motion="music"]::after,
+.action-preview[data-motion="sparkle"]::after,
+.action-preview[data-motion="surprise"]::after {
+  content: "♪";
+  position: absolute;
+  right: 8px;
+  top: 2px;
   color: var(--accent);
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 900;
 }
 
 .pet-action-grid button strong {
   font-size: 11px;
+  line-height: 1.1;
+}
+
+.pet-action-grid button em {
+  color: var(--muted);
+  font-size: 10px;
+  font-style: normal;
   line-height: 1.1;
 }
 
@@ -2660,6 +3383,362 @@ dialog::backdrop {
   25% { transform: translateX(-50%) rotate(-5deg) translateY(-4px); }
   50% { transform: translateX(-50%) rotate(4deg); }
   75% { transform: translateX(-50%) rotate(-3deg) translateY(-3px); }
+}
+
+@keyframes rigIdleBody {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-4px); }
+}
+
+@keyframes rigShadow {
+  0%, 100% { transform: scale(1); opacity: 0.72; }
+  50% { transform: scale(0.88); opacity: 0.42; }
+}
+
+@keyframes rigHairBack {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(1.4deg); }
+}
+
+@keyframes rigTorsoIdle {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(-0.9deg); }
+}
+
+@keyframes rigHeadIdle {
+  0%, 100% { transform: rotate(0) translateY(0); }
+  50% { transform: rotate(1.2deg) translateY(-1px); }
+}
+
+@keyframes rigBlink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.08); }
+}
+
+@keyframes rigBang {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 2px; }
+}
+
+@keyframes rigSideHair {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 3px; }
+}
+
+@keyframes rigActionBase {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  45% { transform: translateX(-50%) translateY(-4px); }
+}
+
+@keyframes rigWaveArm {
+  0%, 100% { transform: rotate(-22deg); }
+  18% { transform: translate(-10px, -24px) rotate(-112deg); }
+  38% { transform: translate(-12px, -28px) rotate(-72deg); }
+  58% { transform: translate(-10px, -24px) rotate(-118deg); }
+  78% { transform: translate(-12px, -28px) rotate(-72deg); }
+}
+
+@keyframes rigWaveHead {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(-6deg) translateY(-2px); }
+}
+
+@keyframes rigSmile {
+  0%, 100% { transform: scale(1); border-bottom-width: 3px; }
+  50% { transform: scaleX(1.35) scaleY(1.25); border-bottom-width: 4px; }
+}
+
+@keyframes rigBellyHand {
+  0%, 100% { transform: rotate(22deg); }
+  45%, 70% { transform: translate(18px, 4px) rotate(78deg); }
+}
+
+@keyframes rigBellyHandRight {
+  0%, 100% { transform: rotate(-22deg); }
+  45%, 70% { transform: translate(-18px, 5px) rotate(-74deg); }
+}
+
+@keyframes rigHungryHead {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(6deg) translateY(3px); }
+}
+
+@keyframes rigTinyMouth {
+  0%, 100% { transform: scaleX(0.7); }
+  50% { transform: scaleX(0.42) translateY(1px); }
+}
+
+@keyframes rigFloatProp {
+  0% { transform: translateY(10px) scale(0.6); opacity: 0; }
+  25%, 80% { opacity: 1; }
+  100% { transform: translateY(-14px) scale(1); opacity: 0; }
+}
+
+@keyframes rigFoodBite {
+  0% { transform: translate(0, 0) scale(0.72); opacity: 0; }
+  25%, 70% { opacity: 1; }
+  45% { transform: translate(-36px, -30px) scale(1); }
+  100% { transform: translate(-42px, -38px) scale(0.25); opacity: 0; }
+}
+
+@keyframes rigEatArm {
+  0%, 100% { transform: rotate(-22deg); }
+  35%, 65% { transform: translate(-18px, -20px) rotate(-82deg); }
+}
+
+@keyframes rigChew {
+  0%, 100% { transform: scaleY(0.7) scaleX(1); }
+  50% { transform: scaleY(1.7) scaleX(1.25); }
+}
+
+@keyframes rigCupDrink {
+  0% { transform: translate(0, 0) rotate(0); opacity: 0; }
+  25%, 80% { opacity: 1; }
+  50% { transform: translate(-35px, -32px) rotate(-18deg); }
+  100% { transform: translate(0, 0) rotate(0); opacity: 0; }
+}
+
+@keyframes rigDrinkArm {
+  0%, 100% { transform: rotate(-22deg); }
+  45%, 70% { transform: translate(-16px, -24px) rotate(-76deg); }
+}
+
+@keyframes rigDrinkHead {
+  0%, 100% { transform: rotate(0); }
+  52% { transform: rotate(-9deg) translateY(2px); }
+}
+
+@keyframes rigSleepEyes {
+  0%, 100% { transform: scaleY(1); }
+  35%, 75% { transform: scaleY(0.08); }
+}
+
+@keyframes rigSleepHead {
+  0%, 100% { transform: rotate(0) translateY(0); }
+  50% { transform: rotate(8deg) translateY(7px); }
+}
+
+@keyframes rigYawn {
+  0%, 100% { transform: scale(1); height: 8px; }
+  48%, 72% { transform: scale(1.5); height: 16px; border: 3px solid var(--pet-line); border-radius: 50%; }
+}
+
+@keyframes rigStretchLeft {
+  0%, 100% { transform: rotate(22deg); }
+  35%, 75% { transform: translate(4px, -48px) rotate(154deg); }
+}
+
+@keyframes rigStretchRight {
+  0%, 100% { transform: rotate(-22deg); }
+  35%, 75% { transform: translate(-4px, -48px) rotate(-154deg); }
+}
+
+@keyframes rigStretchBody {
+  0%, 100% { transform: rotate(0) scaleY(1); }
+  50% { transform: rotate(-2deg) scaleY(1.08); }
+}
+
+@keyframes rigBookOpen {
+  0% { transform: translateY(14px) rotate(-8deg) scale(0.72); opacity: 0; }
+  24%, 82% { opacity: 1; }
+  50% { transform: translateY(0) rotate(0) scale(1); }
+  100% { transform: translateY(10px) rotate(6deg) scale(0.82); opacity: 0; }
+}
+
+@keyframes rigReadHead {
+  0%, 100% { transform: rotate(0); }
+  45%, 75% { transform: rotate(3deg) translateY(7px); }
+}
+
+@keyframes rigHoldBookLeft {
+  0%, 100% { transform: rotate(22deg); }
+  35%, 80% { transform: translate(16px, 8px) rotate(78deg); }
+}
+
+@keyframes rigHoldBookRight {
+  0%, 100% { transform: rotate(-22deg); }
+  35%, 80% { transform: translate(-16px, 8px) rotate(-78deg); }
+}
+
+@keyframes rigThinkHead {
+  0%, 100% { transform: rotate(0); }
+  42%, 72% { transform: rotate(-8deg) translateY(2px); }
+}
+
+@keyframes rigThinkHand {
+  0%, 100% { transform: rotate(-22deg); }
+  42%, 72% { transform: translate(-14px, -30px) rotate(-98deg); }
+}
+
+@keyframes rigThinkBubble {
+  0% { transform: translateY(8px) scale(0.72); opacity: 0; }
+  25%, 80% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-12px) scale(0.8); opacity: 0; }
+}
+
+@keyframes rigConfusedHead {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-12deg); }
+  42% { transform: rotate(10deg); }
+  64% { transform: rotate(-8deg); }
+}
+
+@keyframes rigConfusedEyes {
+  0%, 100% { transform: translateX(0); }
+  45% { transform: translateX(2px); }
+  70% { transform: translateX(-2px); }
+}
+
+@keyframes rigQuestionShake {
+  0% { transform: scale(0.65); opacity: 0; }
+  20%, 80% { opacity: 1; }
+  35% { transform: translateX(-5px) scale(1); }
+  55% { transform: translateX(5px) scale(1); }
+  100% { transform: translateY(-10px) scale(0.8); opacity: 0; }
+}
+
+@keyframes rigCheerLeft {
+  0%, 100% { transform: rotate(22deg); }
+  35%, 75% { transform: translate(10px, -42px) rotate(148deg); }
+}
+
+@keyframes rigCheerRight {
+  0%, 100% { transform: rotate(-22deg); }
+  35%, 75% { transform: translate(-10px, -42px) rotate(-148deg); }
+}
+
+@keyframes rigHappyJump {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  32% { transform: translateX(-50%) translateY(-20px); }
+  62% { transform: translateX(-50%) translateY(-8px); }
+}
+
+@keyframes rigCelebrateJump {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(0); }
+  25% { transform: translateX(-50%) translateY(-22px) rotate(-7deg); }
+  52% { transform: translateX(-50%) translateY(-8px) rotate(8deg); }
+  76% { transform: translateX(-50%) translateY(-18px) rotate(-4deg); }
+}
+
+@keyframes rigSparkleBurst {
+  0% { transform: scale(0.7); opacity: 0; }
+  20%, 78% { opacity: 1; }
+  50% { transform: scale(1.14) rotate(12deg); }
+  100% { transform: scale(1.32) rotate(-8deg); opacity: 0; }
+}
+
+@keyframes rigShyLeft {
+  0%, 100% { transform: rotate(22deg); }
+  40%, 78% { transform: translate(18px, -28px) rotate(94deg); }
+}
+
+@keyframes rigShyRight {
+  0%, 100% { transform: rotate(-22deg); }
+  40%, 78% { transform: translate(-18px, -28px) rotate(-94deg); }
+}
+
+@keyframes rigBlush {
+  0%, 100% { opacity: 0.45; transform: scaleX(1); }
+  45%, 80% { opacity: 1; transform: scaleX(1.35); }
+}
+
+@keyframes rigShyHead {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(8deg) translateY(4px); }
+}
+
+@keyframes rigAngryEyes {
+  0%, 100% { transform: scaleY(1) skewX(0); }
+  45%, 78% { transform: scaleY(0.62) skewX(-10deg); }
+}
+
+@keyframes rigAngryHead {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  30%, 70% { transform: translateY(3px) rotate(-3deg); }
+}
+
+@keyframes rigStomp {
+  0%, 100% { transform: translateY(0); }
+  18%, 52%, 82% { transform: translateY(4px); }
+  35%, 68% { transform: translateY(-3px); }
+}
+
+@keyframes rigMusicGroove {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(0); }
+  25% { transform: translateX(calc(-50% - 5px)) translateY(-5px) rotate(-4deg); }
+  55% { transform: translateX(calc(-50% + 5px)) translateY(-6px) rotate(4deg); }
+  78% { transform: translateX(-50%) translateY(-2px) rotate(-2deg); }
+}
+
+@keyframes rigMusicNote {
+  0% { transform: translateY(14px) scale(0.6); opacity: 0; }
+  20%, 80% { opacity: 1; }
+  100% { transform: translateY(-20px) scale(1.08); opacity: 0; }
+}
+
+@keyframes rigMusicLeft {
+  0%, 100% { transform: rotate(22deg); }
+  50% { transform: translate(7px, -12px) rotate(52deg); }
+}
+
+@keyframes rigMusicRight {
+  0%, 100% { transform: rotate(-22deg); }
+  50% { transform: translate(-7px, -12px) rotate(-52deg); }
+}
+
+@keyframes rigSparklePose {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) translateY(-8px) scale(1.04); }
+}
+
+@keyframes rigExerciseLeft {
+  0%, 100% { transform: rotate(22deg); }
+  20% { transform: translate(8px, -24px) rotate(120deg); }
+  45% { transform: translate(2px, 5px) rotate(42deg); }
+  70% { transform: translate(10px, -26px) rotate(136deg); }
+}
+
+@keyframes rigExerciseBody {
+  0%, 100% { transform: translateX(-50%) rotate(0); }
+  25% { transform: translateX(calc(-50% - 3px)) rotate(-4deg); }
+  50% { transform: translateX(calc(-50% + 3px)) rotate(4deg); }
+  75% { transform: translateX(-50%) rotate(-2deg); }
+}
+
+@keyframes rigTeaRelax {
+  0% { transform: translateY(8px); opacity: 0; }
+  30%, 78% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(10px); opacity: 0; }
+}
+
+@keyframes rigRelaxArm {
+  0%, 100% { transform: rotate(-22deg); }
+  42%, 78% { transform: translate(-12px, -8px) rotate(-48deg); }
+}
+
+@keyframes rigRelaxHead {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(-5deg) translateY(2px); }
+}
+
+@keyframes rigSurpriseLeft {
+  0%, 100% { transform: rotate(22deg); }
+  35%, 76% { transform: translate(-13px, -24px) rotate(-40deg); }
+}
+
+@keyframes rigSurpriseRight {
+  0%, 100% { transform: rotate(-22deg); }
+  35%, 76% { transform: translate(13px, -24px) rotate(40deg); }
+}
+
+@keyframes rigSurpriseMouth {
+  0%, 100% { transform: scale(1); height: 8px; }
+  35%, 76% { transform: scale(1.45); width: 16px; height: 17px; border: 3px solid var(--pet-line); border-radius: 50%; }
+}
+
+@keyframes rigSurpriseHead {
+  0%, 100% { transform: translateY(0); }
+  40%, 75% { transform: translateY(-8px); }
 }
 
 @keyframes rainbowShift {
